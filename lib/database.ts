@@ -99,7 +99,7 @@ export interface CoreSchema extends GenericSchema {
 
 export interface CoreDatabase {
     storage: StorageSchema;
-    supabase_core: CoreSchema;
+    core: CoreSchema;
 }
 
 export type BaseDatabase<Database> = GenericDatabase<KeyOfString<Database>> & CoreDatabase;

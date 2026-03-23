@@ -111,7 +111,7 @@ export class DataService<
             limit = 64,
         }: FuzzySearchParams<Database, Schema, Type, Relation>,
     ): Promise<Row<Database, Schema, Type, Relation>[]> {
-        const { data } = await this.database.schema('supabase_core')
+        const { data } = await this.database.schema('core')
             .rpc('fuzzy_search', {
                 relation: this.relation,
                 schema_name: this.schema,

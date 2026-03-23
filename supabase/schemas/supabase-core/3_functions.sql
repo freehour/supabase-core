@@ -1,7 +1,7 @@
 -- Function to perform a fuzzy search on a specified table and column.
 -- It returns records where the similarity score exceeds a specified threshold (optional).
 -- The results are ordered by similarity score in descending order.
-CREATE OR REPLACE FUNCTION supabase_core.fuzzy_search(
+CREATE OR REPLACE FUNCTION core.fuzzy_search(
     relation text, -- The name of the table or view to search
     column_name text,
     search_term text,

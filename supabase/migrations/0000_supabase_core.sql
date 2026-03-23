@@ -1,10 +1,10 @@
 create extension if not exists "pg_trgm" with schema "extensions";
 
-create schema if not exists "supabase_core";
+create schema if not exists "core";
 
 set check_function_bodies = off;
 
-CREATE OR REPLACE FUNCTION supabase_core.fuzzy_search(relation text, column_name text, search_term text, schema_name text DEFAULT 'public'::text, min_similarity double precision DEFAULT 0, limit_results integer DEFAULT 64)
+CREATE OR REPLACE FUNCTION core.fuzzy_search(relation text, column_name text, search_term text, schema_name text DEFAULT 'public'::text, min_similarity double precision DEFAULT 0, limit_results integer DEFAULT 64)
  RETURNS SETOF json
  LANGUAGE plpgsql
  STABLE
