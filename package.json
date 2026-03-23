@@ -2,8 +2,8 @@
     "name": "@freehour/supabase-core",
     "private": false,
     "displayName": "Supabase-Core",
-    "description": "Core services for Supabase",
-    "version": "1.1.1",
+    "description": "Lightweight services for supabase to make it easier to work with databases, tables and storage buckets",
+    "version": "1.1.2",
     "type": "module",
     "repository": {
         "type": "git",
