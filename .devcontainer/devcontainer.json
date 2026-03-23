@@ -1,0 +1,73 @@
+{
+    "name": "Supabase-Core",
+    "image": "oven/bun:latest",
+    "features": {
+        "ghcr.io/devcontainers/features/docker-in-docker": {
+            "moby": false
+        },
+        "ghcr.io/devcontainers/features/sshd": {}
+    },
+    // "runArgs": ["--env-file", ".devcontainer/.env"],
+    // Run container as root for docker-in-docker
+    "containerUser": "root",
+    // But VS Code + terminals use bun
+    "remoteUser": "bun",
+    "postCreateCommand": "bun install",
+    "portsAttributes": {
+        "54321": {
+            "label": "🌐 Supabase API",
+            "onAutoForward": "silent"
+        },
+        "54322": {
+            "label": "🐘 PostgreSQL Database",
+            "onAutoForward": "silent"
+        },
+        "54323": {
+            "label": "📊 Supabase Studio",
+            "onAutoForward": "silent"
+        }
+    },
+    "mounts": [
+        "source=${localEnv:HOME}/.gitconfig,target=/home/bun/.gitconfig,type=bind,consistency=cached",
+        "source=${localEnv:HOME}/.ssh,target=/home/bun/.ssh,type=bind,consistency=cached"
+    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "oven.bun-vscode",
+                "GitHub.copilot",
+                "mhutchie.git-graph",
+                "PKief.material-icon-theme",
+                "wayou.vscode-todo-highlight",
+                "shardulm94.trailing-spaces",
+                "dbaeumer.vscode-eslint",
+                "tamasfe.even-better-toml"
+            ],
+            "settings": {
+                // follows eslint rules
+                "editor.tabSize": 4,
+                "editor.insertSpaces": true,
+                // use eslint for formatting instead
+                "editor.formatOnSave": false,
+                // Auto fix eslint problems on save
+                "editor.codeActionsOnSave": {
+                    "source.fixAll.eslint": "never",
+                    // eslint already takes care of sorting imports
+                    "source.organizeImports": "never"
+                },
+                "terminal.integrated.defaultProfile.linux": "bash",
+
+                "material-icon-theme.files.customClones": [
+                    {
+                        "name": "index",
+                        "base": "typescript",
+                        "color": "gray-500",
+                        "fileNames": [
+                            "index.ts"
+                        ]
+                    }
+                ]
+            }
+        }
+    }
+}

@@ -1,0 +1,53 @@
+  {
+    "root": true,
+    "env": {
+        "node": true,
+        "browser": false
+    },
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+        "project": ["./tsconfig.lib.json"]
+    },
+    "plugins": [
+        "@stylistic/js",
+        "@stylistic/plus",
+        "@stylistic/ts",
+        "@typescript-eslint",
+        "import-x",
+        "simple-import-sort"
+    ],
+    "extends": [
+        "./eslint/v8/.eslintrc.json",
+        "./eslint/v8/@stylistic/js/.eslintrc.json",
+        "./eslint/v8/@stylistic/plus/.eslintrc.json",
+        "./eslint/v8/@stylistic/ts/.eslintrc.json",
+        "./eslint/v8/@typescript-eslint/.eslintrc.json",
+        "./eslint/v8/import-x/.eslintrc.json",
+        "./eslint/v8/simple-import-sort/.eslintrc.json"
+    ],
+    "ignorePatterns": [
+        "dist",
+        "node_modules",
+        "vite.config.ts",
+        "scripts"
+    ],
+    "settings": {
+        "import-x/parsers": {
+            "@typescript-eslint/parser": [".ts"]
+        },
+        "import-x/resolver": {
+            "typescript": {
+                "alwaysTryTypes": true,
+                "project": ["./tsconfig.lib.json"]
+            }
+        }
+    },
+    "globals": {
+        "Bun": "readonly"
+    },
+    "rules": {
+        // some functions are too complex to type by hand
+        "@typescript-eslint/explicit-function-return-type": "off",
+        "@typescript-eslint/explicit-module-boundary-types": "off"
+    }
+}

@@ -1,0 +1,11 @@
+# Node/Bun
+node_modules
+
+# VS-Code
+.vscode
+
+# Output
+dist
+
+# Stash Folder, put anything you don't want to commit here
+.stash
