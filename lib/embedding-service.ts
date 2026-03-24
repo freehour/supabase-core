@@ -8,7 +8,9 @@ import type { StorageService } from './storage-service';
 import { removeElement } from './utils';
 
 
-export interface EmbeddingServiceParams<BucketName extends string> {
+export interface EmbeddingServiceParams<
+    BucketName extends string = string,
+> {
     storage: StorageService<BucketName>;
 }
 

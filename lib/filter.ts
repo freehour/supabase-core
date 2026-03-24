@@ -47,14 +47,13 @@ export const LogicalOpSeparator = ',';
  */
 export const FilterChainSeparator = '~';
 
-
 /**
- * A single filter conddition in an abstract syntax tree (AST) of filter nodes.
+ * A single filter condition in an abstract syntax tree (AST) of filter nodes.
  * @param K The type of keys in the filter expression.
  * @return The Zod schema representing the filter condition node.
  */
 export interface FilterConditionNode<K extends string = string> {
-    type: 'condition';
+    type?: 'condition';
     op: FilterOp;
     value: string | number | boolean | null;
     key: K;
