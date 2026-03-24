@@ -1,22 +1,20 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { DataService, TableDataService, ViewDataService } from './data-service';
-import type { BaseDatabase, CoreDatabase } from './database';
+import type { CoreDatabase } from './database';
 import type { RelationName, RelationType, SchemaName, TableName, ViewName } from './relation';
+import type { KeyOfString } from './utils';
 
 
 export interface DatabaseServiceParams<
-    Database,
+    Database extends CoreDatabase = CoreDatabase,
 > {
     supabase: SupabaseClient<Database>;
 }
 
 
-/**
- * Service for interacting with a supabase database.
- */
-export class DatabaseService<
-    Database extends BaseDatabase<Database> = CoreDatabase,
+class _DatabaseService<
+    Database extends CoreDatabase,
 > {
     private readonly supabase: SupabaseClient<Database>;
 
@@ -24,16 +22,8 @@ export class DatabaseService<
         this.supabase = supabase;
     }
 
-    get schema(): typeof this.supabase.schema {
-        return this.supabase.schema.bind(this.supabase);
-    }
-
-    get rpc(): typeof this.supabase.rpc {
-        return this.supabase.rpc.bind(this.supabase);
-    }
-
-    get from(): typeof this.supabase.from {
-        return this.supabase.from.bind(this.supabase);
+    schema<DynamicSchema extends Exclude<KeyOfString<Database>, '__InternalSupabase'>>(schema: DynamicSchema) {
+        return this.supabase.schema(schema);
     }
 
     relation<
@@ -69,3 +59,14 @@ export class DatabaseService<
         });
     }
 }
+
+/**
+ * Service for interacting with a supabase database.
+ */
+export type DatabaseService<
+    Database extends CoreDatabase = CoreDatabase,
+> = _DatabaseService<Database> & _DatabaseService<CoreDatabase>;
+
+export const DatabaseService = _DatabaseService as unknown as new<
+    Database extends CoreDatabase = CoreDatabase,
+>(params: DatabaseServiceParams<Database>) => DatabaseService<Database>;

@@ -1,7 +1,6 @@
 import type { FileMetadata } from '@supabase/storage-js';
 
 import type { Json } from './json';
-import type { KeyOfString } from './utils';
 
 
 export interface GenericRelationship {
@@ -53,7 +52,7 @@ export interface GenericSchema {
     Functions: Record<string, GenericFunction>;
 }
 
-export type GenericDatabase<K extends string = string> = Record<K, GenericSchema>;
+export type GenericDatabase<K extends string = (string & {})> = Record<K, GenericSchema>;
 
 
 export interface StorageObjectsTable extends GenericTable {
@@ -97,9 +96,8 @@ export interface CoreSchema extends GenericSchema {
     };
 }
 
-export interface CoreDatabase {
+export interface CoreDatabase extends GenericDatabase {
     storage: StorageSchema;
     core: CoreSchema;
 }
 
-export type BaseDatabase<Database> = GenericDatabase<KeyOfString<Database>> & CoreDatabase;

@@ -4,7 +4,7 @@ import type { PostgrestResponseSuccess } from '@supabase/postgrest-js';
 import type { PostgrestSingleResponse } from '@supabase/supabase-js';
 
 import type { FuzzySearchParams, UpsertOptions } from './data';
-import type { BaseDatabase, CoreDatabase } from './database';
+import type { CoreDatabase } from './database';
 import type { DatabaseService } from './database-service';
 import { RecordNotFoundError } from './errors';
 import { postgrestExtensions } from './postgrest-extensions';
@@ -14,7 +14,7 @@ import type { OmitFrom } from './utils';
 
 
 export interface DataServiceParams<
-    Database extends BaseDatabase<Database>,
+    Database extends CoreDatabase,
     Schema extends SchemaName<Database>,
     Type extends RelationType = RelationType,
     Relation extends RelationName<Database, Schema, Type> = RelationName<Database, Schema, Type>,
@@ -48,13 +48,12 @@ export interface DataServiceParams<
  * const record = await service.find('some-id');
  */
 export class DataService<
-    Database extends BaseDatabase<Database>,
+    Database extends CoreDatabase,
     Schema extends SchemaName<Database> = SchemaName<Database>,
     Type extends RelationType = RelationType,
     Relation extends RelationName<Database, Schema, Type> = RelationName<Database, Schema, Type>,
 > {
-
-    private readonly database: DatabaseService<Database & CoreDatabase>;
+    private readonly database: DatabaseService<Database>;
 
     /**
      * The name of the schema containing the view.
@@ -284,7 +283,7 @@ export type TRow<Service> = Service extends DataService<infer D, infer S, infer 
 
 
 export interface TableDataServiceParams<
-    Database extends BaseDatabase<Database>,
+    Database extends CoreDatabase,
     Schema extends SchemaName<Database>,
     Table extends TableName<Database, Schema>,
 > extends OmitFrom<DataServiceParams<Database, Schema>, 'relation'> {
@@ -309,7 +308,7 @@ export interface TableDataServiceParams<
  * await table.delete('some-id');
  */
 export class TableDataService<
-    Database extends BaseDatabase<Database>,
+    Database extends CoreDatabase,
     Schema extends SchemaName<Database> = SchemaName<Database>,
     Table extends TableName<Database, Schema> = TableName<Database, Schema>,
 > extends DataService<Database, Schema, 'Tables', Table> {
@@ -328,7 +327,7 @@ export class TableDataService<
 }
 
 export interface ViewDataServiceParams<
-    Database extends BaseDatabase<Database>,
+    Database extends CoreDatabase,
     Schema extends SchemaName<Database>,
     View extends ViewName<Database, Schema> = ViewName<Database, Schema>,
 > extends OmitFrom<DataServiceParams<Database, Schema>, 'relation'> {
@@ -352,7 +351,7 @@ export interface ViewDataServiceParams<
  * const record = await view.find('some-id');
  */
 export class ViewDataService<
-    Database extends BaseDatabase<Database>,
+    Database extends CoreDatabase,
     Schema extends SchemaName<Database> = SchemaName<Database>,
     View extends ViewName<Database, Schema> = ViewName<Database, Schema>,
 > extends DataService<Database, Schema, 'Views', View> {

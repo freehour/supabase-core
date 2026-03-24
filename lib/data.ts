@@ -1,4 +1,4 @@
-import type { BaseDatabase } from './database';
+import type { CoreDatabase } from './database';
 import type { ColumnName, RelationName, RelationType, SchemaName } from './relation';
 import type { CountMethod } from './select';
 
@@ -6,7 +6,7 @@ import type { CountMethod } from './select';
  * Options for fuzzy searching within a database table or view.
  */
 export interface FuzzySearchParams<
-    Database extends BaseDatabase<Database>,
+    Database extends CoreDatabase,
     Schema extends SchemaName<Database> = SchemaName<Database>,
     Type extends RelationType = RelationType,
     Relation extends RelationName<Database, Schema, Type> = RelationName<Database, Schema, Type>,
@@ -43,7 +43,7 @@ export interface FuzzySearchParams<
  * Upserting means inserting a new row or updating an existing row if it already exists.
  */
 export interface UpsertOptions<
-    Database extends BaseDatabase<Database>,
+    Database extends CoreDatabase,
     Schema extends SchemaName<Database> = SchemaName<Database>,
     Type extends RelationType = RelationType,
     Relation extends RelationName<Database, Schema, Type> = RelationName<Database, Schema, Type>,
