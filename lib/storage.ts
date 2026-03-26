@@ -1,7 +1,7 @@
 import type { Camelize, FileObjectV2, TransformOptions } from '@supabase/storage-js';
 import { StorageClient as SupabaseStorageClient } from '@supabase/storage-js';
 
-import type { StorageObjectsTable } from './database';
+import type { Database } from './generated/database';
 import type { OmitFrom } from './utils';
 
 
@@ -9,7 +9,7 @@ export declare class StorageClient<BucketName extends string = string> extends S
     from(bucket: BucketName | (string & {})): ReturnType<SupabaseStorageClient['from']>;
 }
 
-export type StorageObject = StorageObjectsTable['Row'];
+export type StorageObject = Database['storage']['Tables']['objects']['Row'];
 
 export interface StorageLocation {
     fileId: string;

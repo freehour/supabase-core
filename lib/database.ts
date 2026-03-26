@@ -1,6 +1,4 @@
-import type { FileMetadata } from '@supabase/storage-js';
-
-import type { Json } from './json';
+import type { KeyOfString } from './utils';
 
 
 export interface GenericRelationship {
@@ -52,52 +50,131 @@ export interface GenericSchema {
     Functions: Record<string, GenericFunction>;
 }
 
-export type GenericDatabase<K extends string = (string & {})> = Record<K, GenericSchema>;
+export type GenericDatabase<K extends string = string> = Record<K, GenericSchema>;
 
-
-export interface StorageObjectsTable extends GenericTable {
-    Row: {
-        bucket_id: string | null;
-        created_at: string | null;
-        id: string;
-        last_accessed_at: string | null;
-        metadata: FileMetadata | null;
-        name: string | null;
-        owner: string | null;
-        owner_id: string | null;
-        path_tokens: string[] | null;
-        updated_at: string | null;
-        user_metadata: Json | null;
-        version: string | null;
-    };
+export interface ClientServerOptions {
+    PostgrestVersion?: string;
 }
 
-export interface StorageSchema extends GenericSchema {
-    Tables: {
-        objects: StorageObjectsTable;
-    };
+export interface InternalSupabase extends ClientServerOptions {
 }
 
-export interface FuzzySearchFunction extends GenericFunction {
-    Args: {
-        column_name: string;
-        limit_results?: number;
-        min_similarity?: number;
-        schema_name?: string;
-        search_term: string;
-        relation: string;
-    };
-    Returns: Json[];
+export interface InternalSupabaseDatabase {
+    __InternalSupabase: InternalSupabase;
 }
 
-export interface CoreSchema extends GenericSchema {
-    Functions: {
-        fuzzy_search: FuzzySearchFunction;
-    };
-}
+export type ClientOptions<
+    D,
+> = D extends InternalSupabaseDatabase
+    ? D['__InternalSupabase']
+    : ClientServerOptions;
 
-export interface CoreDatabase extends GenericDatabase {
-    storage: StorageSchema;
-    core: CoreSchema;
-}
+export type DefaultClientOptions<
+    D,
+> = ClientOptions<D> extends Required<ClientServerOptions> ? ClientOptions<D> : { PostgrestVersion: '12' };
+
+
+// export type SchemaName<D> = Exclude<{
+//     [K in KeyOfString<D>]: D[K] extends GenericSchema ? K : never;
+// }[KeyOfString<D>], '__InternalSupabase'>;
+
+export type SchemaName<D> = Exclude<KeyOfString<D>, '__InternalSupabase'>;
+
+export type DefaultSchemaName<D> = 'public' extends SchemaName<D> ? 'public' : SchemaName<D>;
+
+export type RelationType = 'Tables' | 'Views';
+export type RelationName<D extends GenericDatabase<S>, S extends SchemaName<D> = SchemaName<D>, R extends RelationType = RelationType> = KeyOfString<D[S][R]>;
+export type TableName<D extends GenericDatabase<S>, S extends SchemaName<D> = SchemaName<D>> = RelationName<D, S, 'Tables'>;
+export type ViewName<D extends GenericDatabase<S>, S extends SchemaName<D> = SchemaName<D>> = RelationName<D, S, 'Views'>;
+export type FunctionName<D extends GenericDatabase<S>, S extends SchemaName<D> = SchemaName<D>> = KeyOfString<D[S]['Functions']>;
+
+export type ColumnName<
+    D extends GenericDatabase<S>,
+    S extends SchemaName<D> = SchemaName<D>,
+    R extends RelationType = RelationType,
+    T extends RelationName<D, S, R> = RelationName<D, S, R>,
+> = KeyOfString<D[S][R][T]['Row']>;
+
+export type TableColumnName<
+    D extends GenericDatabase<S>,
+    S extends SchemaName<D> = SchemaName<D>,
+    T extends TableName<D, S> = TableName<D, S>,
+> = ColumnName<D, S, 'Tables', T>;
+
+export type ViewColumnName<
+    D extends GenericDatabase<S>,
+    S extends SchemaName<D> = SchemaName<D>,
+    V extends ViewName<D, S> = ViewName<D, S>,
+> = ColumnName<D, S, 'Views', V>;
+
+export type Schema<
+    D extends GenericDatabase<S>,
+    S extends SchemaName<D> = SchemaName<D>,
+> = D[S];
+
+export type Relation<
+    D extends GenericDatabase<S>,
+    S extends SchemaName<D>,
+    R extends RelationType,
+    T extends RelationName<D, S, R>,
+> = D[S][R][T];
+
+export type Table<
+    D extends GenericDatabase<S>,
+    S extends SchemaName<D> = SchemaName<D>,
+    T extends TableName<D, S> = TableName<D, S>,
+> = D[S]['Tables'][T];
+
+export type View<
+    D extends GenericDatabase<S>,
+    S extends SchemaName<D> = SchemaName<D>,
+    V extends ViewName<D, S> = ViewName<D, S>,
+> = D[S]['Views'][V];
+
+export type Function<
+    D extends GenericDatabase<S>,
+    S extends SchemaName<D> = SchemaName<D>,
+    F extends FunctionName<D, S> = FunctionName<D, S>,
+> = D[S]['Functions'][F];
+
+export type Args<
+    D extends GenericDatabase<S>,
+    S extends SchemaName<D>,
+    F extends FunctionName<D, S>,
+> = D[S]['Functions'][F]['Args'];
+
+export type Row<
+    D extends GenericDatabase<S>,
+    S extends SchemaName<D>,
+    R extends RelationType,
+    T extends RelationName<D, S, R>,
+> = D[S][R][T]['Row'];
+
+export type Insert<
+    D extends GenericDatabase<S>,
+    S extends SchemaName<D>,
+    R extends RelationType,
+    T extends RelationName<D, S, R>,
+> = D[S][R][T] extends { Insert: infer Insert } ? Insert : never;
+
+export type Update<
+    D extends GenericDatabase<S>,
+    S extends SchemaName<D>,
+    R extends RelationType,
+    T extends RelationName<D, S, R>,
+> = D[S][R][T] extends { Update: infer Update } ? Update : never;
+
+export type Relationships<
+    D extends GenericDatabase<S>,
+    S extends SchemaName<D>,
+    R extends RelationType,
+    T extends RelationName<D, S, R>,
+> = D[S][R][T]['Relationships'];
+
+export type ID<
+    D extends GenericDatabase<S>,
+    S extends SchemaName<D>,
+    R extends RelationType,
+    T extends RelationName<D, S, R>,
+> = D[S][R][T]['Row'] extends { id: infer ID } ? ID : never;
 

@@ -7,17 +7,16 @@
         },
         "ghcr.io/devcontainers/features/sshd": {}
     },
-    // "runArgs": ["--env-file", ".devcontainer/.env"],
+    "containerEnv": {
+        // used by scripts
+        "WORKSPACE_DIR": "${containerWorkspaceFolder}"
+    },
     // Run container as root for docker-in-docker
     "containerUser": "root",
     // But VS Code + terminals use bun
     "remoteUser": "bun",
     "postCreateCommand": "bun install",
     "portsAttributes": {
-        "54321": {
-            "label": "🌐 Supabase API",
-            "onAutoForward": "silent"
-        },
         "54322": {
             "label": "🐘 PostgreSQL Database",
             "onAutoForward": "silent"

@@ -216,28 +216,28 @@ export function parseFilterExpression<InputKey extends string = string, OutputKe
     inputKeys: InputKey[] = [],
     transformKey: (key: InputKey) => OutputKey = key => key as unknown as OutputKey,
 ): FilterNode<OutputKey> {
-    // TODO: Handle enquoted expressions with reserved characters: , () : .
     // Split comma-separated args at top level, respecting nested parentheses
     function splitArgs(s: string): string[] {
         const args: string[] = [];
         let depth = 0;
         let buf = '';
+        let inQuotes = false;
         for (const c of s) {
-            if (c === '(') {
+            if (c === '"') {
+                inQuotes = !inQuotes;
+                buf += c;
+            } else if (c === '(' && !inQuotes) {
                 depth++;
                 buf += c;
-            } else if (c === ')') {
+            } else if (c === ')' && !inQuotes) {
                 depth--;
                 buf += c;
-            } else if (c === ',' && depth === 0) {
+            } else if (c === ',' && depth === 0 && !inQuotes) {
                 args.push(buf.trim());
                 buf = '';
             } else {
                 buf += c;
             }
-        }
-        if (buf) {
-            args.push(buf.trim());
         }
         return args;
     }

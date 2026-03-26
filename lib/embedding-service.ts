@@ -43,7 +43,7 @@ export abstract class EmbeddingService<
      * @param metadata The metadata of the corresponding file.
      * @return An array of generated embeddings.
      */
-    protected abstract createEmbeddings(location: StorageLocation, text: string, metadata: FileMetadata): Promise<Embedding[]>;
+    protected abstract createEmbeddings(location: StorageLocation, text: string, metadata: FileMetadata & Metadata): Promise<Embedding[]>;
 
     /**
      * Delete the embeddings associated with the given file reference.
@@ -126,7 +126,6 @@ export abstract class EmbeddingService<
             name: file.name,
             type: file.type,
             size: file.size,
-            ...location,
             ...typeof metadata === 'function' ? metadata(file, location) : metadata,
         };
         const text = this.preprocess(await file.text(), fileMetadata);

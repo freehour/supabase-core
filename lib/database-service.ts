@@ -1,72 +1,81 @@
+import type * as Supabase from '@supabase/postgrest-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+import type { Database as CoreDatabase } from './generated/database';
 import { DataService, TableDataService, ViewDataService } from './data-service';
-import type { CoreDatabase } from './database';
-import type { RelationName, RelationType, SchemaName, TableName, ViewName } from './relation';
-import type { KeyOfString } from './utils';
+import type { ClientServerOptions, DefaultClientOptions, GenericDatabase, RelationName as BaseRelationName, RelationType, SchemaName as BaseSchemaName, TableName as BaseTableName, ViewName as BaseViewName } from './database';
+import { PostgrestClient } from './postgrest';
 
 
-export interface DatabaseServiceParams<
-    Database extends CoreDatabase = CoreDatabase,
+class DatabaseServiceImpl<
+    Database extends GenericDatabase<BaseSchemaName<Database>> & CoreDatabase = CoreDatabase,
+    ClientOptions extends Required<ClientServerOptions> = DefaultClientOptions<Database>,
 > {
-    supabase: SupabaseClient<Database>;
-}
+    private readonly supabase: SupabaseClient<Database, ClientOptions>;
 
-
-class _DatabaseService<
-    Database extends CoreDatabase,
-> {
-    private readonly supabase: SupabaseClient<Database>;
-
-    constructor({ supabase }: DatabaseServiceParams<Database>) {
+    constructor({ supabase }: DatabaseServiceParams<Database, ClientOptions>) {
         this.supabase = supabase;
     }
 
-    schema<DynamicSchema extends Exclude<KeyOfString<Database>, '__InternalSupabase'>>(schema: DynamicSchema) {
-        return this.supabase.schema(schema);
+    schema<SchemaName extends BaseSchemaName<Database>>(
+        schema: SchemaName,
+    ): PostgrestClient<Database, ClientOptions, SchemaName> {
+        const client = this.supabase.schema(schema) as unknown as Supabase.PostgrestClient<Database, ClientOptions, SchemaName>;
+        return new PostgrestClient(client);
     }
 
     relation<
-        Schema extends SchemaName<Database>,
-        Relation extends RelationName<Database, Schema>,
-    >(schema: Schema, relation: Relation): DataService<Database, Schema, RelationType, Relation> {
-        return new DataService<Database, Schema, RelationType, Relation>({
-            database: this as unknown as DatabaseService<Database>,
+        SchemaName extends BaseSchemaName<Database>,
+        RelationName extends BaseRelationName<Database, SchemaName>,
+    >(schema: SchemaName, relation: RelationName): DataService<Database, ClientOptions, SchemaName, RelationType, RelationName> {
+        return new DataService<Database, ClientOptions, SchemaName, RelationType, RelationName>({
+            database: this as unknown as DatabaseService<Database, ClientOptions>,
             schema,
             relation,
         });
     }
 
     table<
-        Schema extends SchemaName<Database>,
-        Table extends TableName<Database, Schema>,
-    >(schema: Schema, table: Table): TableDataService<Database, Schema, Table> {
-        return new TableDataService<Database, Schema, Table>({
-            database: this as unknown as DatabaseService<Database>,
+        SchemaName extends BaseSchemaName<Database>,
+        TableName extends BaseTableName<Database, SchemaName>,
+    >(schema: SchemaName, table: TableName): TableDataService<Database, ClientOptions, SchemaName, TableName> {
+        return new TableDataService<Database, ClientOptions, SchemaName, TableName>({
+            database: this as unknown as DatabaseService<Database, ClientOptions>,
             schema,
             table,
         });
     }
 
     view<
-        Schema extends SchemaName<Database>,
-        View extends ViewName<Database, Schema>,
-    >(schema: Schema, view: View): ViewDataService<Database, Schema, View> {
-        return new ViewDataService<Database, Schema, View>({
-            database: this as unknown as DatabaseService<Database>,
+        SchemaName extends BaseSchemaName<Database>,
+        ViewName extends BaseViewName<Database, SchemaName>,
+    >(schema: SchemaName, view: ViewName): ViewDataService<Database, ClientOptions, SchemaName, ViewName> {
+        return new ViewDataService<Database, ClientOptions, SchemaName, ViewName>({
+            database: this as unknown as DatabaseService<Database, ClientOptions>,
             schema,
             view,
         });
     }
 }
 
+
 /**
  * Service for interacting with a supabase database.
  */
 export type DatabaseService<
-    Database extends CoreDatabase = CoreDatabase,
-> = _DatabaseService<Database> & _DatabaseService<CoreDatabase>;
+    Database extends GenericDatabase<BaseSchemaName<Database>> & CoreDatabase = CoreDatabase,
+    ClientOptions extends Required<ClientServerOptions> = DefaultClientOptions<Database>,
+> = DatabaseServiceImpl<Database, ClientOptions> & DatabaseServiceImpl<CoreDatabase, ClientOptions>;
 
-export const DatabaseService = _DatabaseService as unknown as new<
-    Database extends CoreDatabase = CoreDatabase,
->(params: DatabaseServiceParams<Database>) => DatabaseService<Database>;
+export interface DatabaseServiceParams<
+    Database extends GenericDatabase<BaseSchemaName<Database>> & CoreDatabase = CoreDatabase,
+    ClientOptions extends Required<ClientServerOptions> = DefaultClientOptions<Database>,
+> {
+    supabase: SupabaseClient<Database, ClientOptions>;
+}
+
+export const DatabaseService = DatabaseServiceImpl as unknown as new<
+    Database extends GenericDatabase<BaseSchemaName<Database>> & CoreDatabase = CoreDatabase,
+    ClientOptions extends Required<ClientServerOptions> = DefaultClientOptions<Database>,
+>(params: DatabaseServiceParams<Database, ClientOptions>) => DatabaseService<Database, ClientOptions>;
+

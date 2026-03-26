@@ -3,80 +3,118 @@ import { assert } from '@freehour/assert';
 import type { PostgrestResponseSuccess } from '@supabase/postgrest-js';
 import type { PostgrestSingleResponse } from '@supabase/supabase-js';
 
-import type { FuzzySearchParams, UpsertOptions } from './data';
-import type { CoreDatabase } from './database';
+import type { Database as CoreDatabase } from './generated/database';
+import type { ClientServerOptions, ColumnName, GenericDatabase, ID, Insert, RelationName as BaseRelationName, RelationType as BaseRelationType, Row, SchemaName as BaseSchemaName, TableName as BaseTableName, Update, ViewName as BaseViewName } from './database';
 import type { DatabaseService } from './database-service';
 import { RecordNotFoundError } from './errors';
-import { postgrestExtensions } from './postgrest-extensions';
-import type { ColumnName, ID, Insert, RelationName, RelationType, Row, SchemaName, TableName, Update, ViewName } from './relation';
-import type { Select, SelectColumns } from './select';
+import type { PostgrestQueryBuilder, SelectQuery, SelectResult, UpsertOptions } from './postgrest';
 import type { OmitFrom } from './utils';
+import { coerceArray } from './utils';
 
+/**
+ * Options for fuzzy searching within a database table or view.
+ */
+export interface FuzzySearchParams<
+    Database extends GenericDatabase<SchemaName> & CoreDatabase,
+    SchemaName extends BaseSchemaName<Database>,
+    RelationType extends BaseRelationType = BaseRelationType,
+    RelationName extends BaseRelationName<Database, SchemaName, RelationType> = BaseRelationName<Database, SchemaName, RelationType>,
+> {
+    /**
+     * The name of the column to search in.
+     */
+    column: ColumnName<Database, SchemaName, RelationType, RelationName>;
+
+    /**
+     * The search term to use for the fuzzy search.
+     * This is the term that will be matched against the specified column.
+     * If empty or undefined, the function will return all rows sorted by the search column.
+     * @default ''
+     */
+    searchTerm?: string;
+
+    /**
+     * The minimum similarity score for results to be included.
+     * This is a number between 0 and 1, where 1 means an exact match.
+     * @default 0
+     */
+    minSimilarity?: number;
+
+    /**
+     * The maximum number of results to return.
+     * @default 64
+     */
+    limit?: number;
+}
 
 export interface DataServiceParams<
-    Database extends CoreDatabase,
-    Schema extends SchemaName<Database>,
-    Type extends RelationType = RelationType,
-    Relation extends RelationName<Database, Schema, Type> = RelationName<Database, Schema, Type>,
+    Database extends GenericDatabase<SchemaName> & CoreDatabase,
+    ClientOptions extends Required<ClientServerOptions>,
+    SchemaName extends BaseSchemaName<Database>,
+    RelationType extends BaseRelationType = BaseRelationType,
+    RelationName extends BaseRelationName<Database, SchemaName, RelationType> = BaseRelationName<Database, SchemaName, RelationType>,
 > {
     /**
      * The database service instance to use for database operations.
      */
-    database: DatabaseService<Database>;
+    database: DatabaseService<Database, ClientOptions>;
 
     /**
      * The name of the schema containing the table or view.
      */
-    schema: Schema;
+    schema: SchemaName;
 
     /**
      * The name of the table or view that this service interacts with.
      */
-    relation: Relation;
+    relation: RelationName;
 }
 
 /**
  * A service for interacting with a specific table or view in a database.
  *
  * @template Database The database type.
- * @template Schema The name of the schema containing the table or view.
- * @template Type The type of relation, either 'Tables' or 'Views'.
- * @template Relation The name of the table or view.
+ * @template ClientOptions The options type for the PostgREST client, including the PostgREST version.
+ * @template SchemaName The name of the schema containing the table or view.
+ * @template RelationType The type of relation, either 'Tables' or 'Views'.
+ * @template RelationName The name of the table or view.
  * @example
  * const service = new DataService({database, schema: 'public', relation: 'my_view'});
  * const records = await service.list();
  * const record = await service.find('some-id');
  */
 export class DataService<
-    Database extends CoreDatabase,
-    Schema extends SchemaName<Database> = SchemaName<Database>,
-    Type extends RelationType = RelationType,
-    Relation extends RelationName<Database, Schema, Type> = RelationName<Database, Schema, Type>,
+    Database extends GenericDatabase<SchemaName> & CoreDatabase,
+    ClientOptions extends Required<ClientServerOptions>,
+    SchemaName extends BaseSchemaName<Database> = BaseSchemaName<Database>,
+    RelationType extends BaseRelationType = BaseRelationType,
+    RelationName extends BaseRelationName<Database, SchemaName, RelationType> = BaseRelationName<Database, SchemaName, RelationType>,
 > {
-    private readonly database: DatabaseService<Database>;
+
+    private readonly database: DatabaseService<Database, ClientOptions>;
 
     /**
      * The name of the schema containing the view.
      */
-    readonly schema: Schema;
+    readonly schema: SchemaName;
 
     /**
      * The name of the view or table that this service interacts with.
      */
-    readonly relation: Relation;
+    readonly relation: RelationName;
 
 
     constructor({
         database,
         schema,
         relation,
-    }: DataServiceParams<Database, Schema, Type, Relation>) {
+    }: DataServiceParams<Database, ClientOptions, SchemaName, RelationType, RelationName>) {
         this.database = database;
         this.schema = schema;
         this.relation = relation;
     }
 
-    private recordNotFoundError(id: ID<Database, Schema, Type, Relation>): RecordNotFoundError {
+    private recordNotFoundError(id: ID<Database, SchemaName, RelationType, RelationName>): RecordNotFoundError {
         return new RecordNotFoundError(`Record with id ${id} not found in ${this.schema}.${this.relation}`, {
             schema: this.schema,
             relation: this.relation,
@@ -90,11 +128,10 @@ export class DataService<
      * @example
      * const { data, error } = await dataService.query.select('*');
      */
-    get query() {
-        const relation = this.database
+    get query(): PostgrestQueryBuilder<Database, ClientOptions, SchemaName, RelationType, RelationName> {
+        return this.database
             .schema(this.schema)
-            .from(this.relation);
-        return postgrestExtensions.query.enable(relation);
+            .from<RelationType, RelationName>(this.relation);
     }
 
     /**
@@ -108,8 +145,8 @@ export class DataService<
             searchTerm = '',
             minSimilarity = 0,
             limit = 64,
-        }: FuzzySearchParams<Database, Schema, Type, Relation>,
-    ): Promise<Row<Database, Schema, Type, Relation>[]> {
+        }: FuzzySearchParams<Database, SchemaName, RelationType, RelationName>,
+    ): Promise<Row<Database, SchemaName, RelationType, RelationName>[]> {
         const { data } = await this.database.schema('core')
             .rpc('fuzzy_search', {
                 relation: this.relation,
@@ -121,7 +158,7 @@ export class DataService<
             })
             .throwOnError();
 
-        return data as unknown as Row<Database, Schema, Type, Relation>[];
+        return data as unknown as Row<Database, SchemaName, RelationType, RelationName>[];
     }
 
     /**
@@ -129,7 +166,7 @@ export class DataService<
      * Equivalent to `select('*')` with no filters or pagination.
      * @returns Array of rows in the relation.
      */
-    async list(): Promise<Row<Database, Schema, Type, Relation>[]> {
+    async list(): Promise<Row<Database, SchemaName, RelationType, RelationName>[]> {
         const { data } = await this.query.select('*').throwOnError();
         return data;
     }
@@ -142,10 +179,11 @@ export class DataService<
      * @throws DatabaseApiError if the query fails.
      */
     async get<
-        Columns extends SelectColumns<Row<Database, Schema, Type, Relation>>,
-    >(id: ID<Database, Schema, Type, Relation>, columns: Columns = '*' as Columns): Promise<
-        Select<Row<Database, Schema, Type, Relation>, Columns> | undefined
-    > {
+        Query extends SelectQuery<Database, SchemaName, RelationType, RelationName> = '*',
+    >(
+        id: ID<Database, SchemaName, RelationType, RelationName>,
+        columns: Query = '*' as Query,
+    ): Promise<SelectResult<Database, SchemaName, RelationType, RelationName, Query> | undefined> {
         const { data } = await this.query
             .select(columns)
             .eq('id', id as any)
@@ -163,10 +201,11 @@ export class DataService<
      * @throws DatabaseApiError if the query fails for any other reason.
      */
     async getOrThrow<
-        Columns extends SelectColumns<Row<Database, Schema, Type, Relation>>,
-    >(id: ID<Database, Schema, Type, Relation>, columns: Columns = '*' as Columns): Promise<
-        Select<Row<Database, Schema, Type, Relation>, Columns>
-    > {
+        Query extends SelectQuery<Database, SchemaName, RelationType, RelationName> = '*',
+    >(
+        id: ID<Database, SchemaName, RelationType, RelationName>,
+        columns: Query = '*' as Query,
+    ): Promise<SelectResult<Database, SchemaName, RelationType, RelationName, Query>> {
         const row = await this.get(id, columns);
         if (row === undefined) {
             throw this.recordNotFoundError(id);
@@ -180,8 +219,8 @@ export class DataService<
      * @return The deleted row, or `undefined` if no row with the specified ID existed.
      * @throws DatabaseApiError if the deletion fails.
      */
-    async delete(id: ID<Database, Schema, Type, Relation>): Promise<
-        Row<Database, Schema, Type, Relation> | undefined
+    async delete(id: ID<Database, SchemaName, RelationType, RelationName>): Promise<
+        Row<Database, SchemaName, RelationType, RelationName> | undefined
     > {
         const { data } = await this.query
             .delete()
@@ -199,8 +238,8 @@ export class DataService<
      * @throws RecordNotFoundError if no row with the specified ID exists.
      * @throws DatabaseApiError if the deletion fails for any other reason.
      */
-    async deleteOrThrow(id: ID<Database, Schema, Type, Relation>): Promise<
-        Row<Database, Schema, Type, Relation>
+    async deleteOrThrow(id: ID<Database, SchemaName, RelationType, RelationName>): Promise<
+        Row<Database, SchemaName, RelationType, RelationName>
     > {
         const row = await this.delete(id);
         if (row === undefined) {
@@ -215,8 +254,8 @@ export class DataService<
      * @returns The inserted row.
      * @throws DatabaseApiError if the insertion fails.
      */
-    async insert(insert: Insert<Database, Schema, Type, Relation>): Promise<
-        Row<Database, Schema, Type, Relation>
+    async insert(insert: Insert<Database, SchemaName, RelationType, RelationName>): Promise<
+        Row<Database, SchemaName, RelationType, RelationName>
     > {
         const { data } = await this.query
             .insert(insert as any)
@@ -234,15 +273,15 @@ export class DataService<
      * @throws DatabaseApiError if the upsert operation fails.
      */
     async upsert(
-        insert: Insert<Database, Schema, Type, Relation>,
+        insert: Insert<Database, SchemaName, RelationType, RelationName>,
         {
             onConflict,
             ...options
-        }: UpsertOptions<Database, Schema, Type, Relation> = {},
-    ): Promise<Row<Database, Schema, Type, Relation>> {
+        }: UpsertOptions<Database, SchemaName, RelationType, RelationName> = {},
+    ): Promise<Row<Database, SchemaName, RelationType, RelationName>> {
         const { data } = await this.query
             .upsert(insert as any, {
-                onConflict: onConflict?.join(','),
+                onConflict: onConflict !== undefined ? coerceArray(onConflict).join(',') : undefined,
                 ...options,
             })
             .select()
@@ -261,9 +300,9 @@ export class DataService<
      * @throws DatabaseApiError if the update fails.
      */
     async update(
-        id: ID<Database, Schema, Type, Relation>,
-        update: Update<Database, Schema, Type, Relation>,
-    ): Promise<Row<Database, Schema, Type, Relation>> {
+        id: ID<Database, SchemaName, RelationType, RelationName>,
+        update: Update<Database, SchemaName, RelationType, RelationName>,
+    ): Promise<Row<Database, SchemaName, RelationType, RelationName>> {
         const { data } = await this.query
             .update(update as any)
             .eq('id', id as any)
@@ -275,22 +314,23 @@ export class DataService<
     }
 }
 
-export type TDatabase<Service> = Service extends DataService<infer D> ? D : never;
-export type TSchema<Service> = Service extends DataService<any, infer S> ? S : never;
-export type TRelation<Service> = Service extends DataService<any, any, infer R> ? R : never;
-export type TColumn<Service> = Service extends DataService<infer D, infer S, infer R, infer T> ? ColumnName<D, S, R, T> : never;
-export type TRow<Service> = Service extends DataService<infer D, infer S, infer R, infer T> ? Row<D, S, R, T> : never;
+// export type TDatabase<Service> = Service extends DataService<infer D> ? D : never;
+// export type TSchema<Service> = Service extends DataService<any, infer S> ? S : never;
+// export type TRelation<Service> = Service extends DataService<any, any, infer R> ? R : never;
+// export type TColumn<Service> = Service extends DataService<infer D, infer S, infer R, infer T> ? ColumnName<D, S, R, T> : never;
+// export type TRow<Service> = Service extends DataService<infer D, infer S, infer R, infer T> ? Row<D, S, R, T> : never;
 
 
 export interface TableDataServiceParams<
-    Database extends CoreDatabase,
-    Schema extends SchemaName<Database>,
-    Table extends TableName<Database, Schema>,
-> extends OmitFrom<DataServiceParams<Database, Schema>, 'relation'> {
+    Database extends GenericDatabase<SchemaName> & CoreDatabase,
+    ClientOptions extends Required<ClientServerOptions>,
+    SchemaName extends BaseSchemaName<Database>,
+    TableName extends BaseTableName<Database, SchemaName>,
+> extends OmitFrom<DataServiceParams<Database, ClientOptions, SchemaName>, 'relation'> {
     /**
      * The name of the table that this service interacts with.
      */
-    table: Table;
+    table: TableName;
 }
 
 /**
@@ -298,6 +338,7 @@ export interface TableDataServiceParams<
  * Provides methods for select, insert, delete, and other table operations.
  *
  * @template Database The database type.
+ * @template ClientOptions The options type for the PostgREST client, including the PostgREST version.
  * @template SchemaName The name of the schema containing the table.
  * @template TableName The name of the table.
  * @example
@@ -308,16 +349,17 @@ export interface TableDataServiceParams<
  * await table.delete('some-id');
  */
 export class TableDataService<
-    Database extends CoreDatabase,
-    Schema extends SchemaName<Database> = SchemaName<Database>,
-    Table extends TableName<Database, Schema> = TableName<Database, Schema>,
-> extends DataService<Database, Schema, 'Tables', Table> {
+    Database extends GenericDatabase<BaseSchemaName<Database>> & CoreDatabase,
+    ClientOptions extends Required<ClientServerOptions>,
+    SchemaName extends BaseSchemaName<Database>,
+    TableName extends BaseTableName<Database, SchemaName>,
+> extends DataService<Database, ClientOptions, SchemaName, 'Tables', TableName> {
 
     constructor({
         database,
         schema,
         table,
-    }: TableDataServiceParams<Database, Schema, Table>) {
+    }: TableDataServiceParams<Database, ClientOptions, SchemaName, TableName>) {
         super({
             database,
             schema,
@@ -327,14 +369,15 @@ export class TableDataService<
 }
 
 export interface ViewDataServiceParams<
-    Database extends CoreDatabase,
-    Schema extends SchemaName<Database>,
-    View extends ViewName<Database, Schema> = ViewName<Database, Schema>,
-> extends OmitFrom<DataServiceParams<Database, Schema>, 'relation'> {
+    Database extends GenericDatabase<BaseSchemaName<Database>> & CoreDatabase,
+    ClientOptions extends Required<ClientServerOptions>,
+    SchemaName extends BaseSchemaName<Database>,
+    ViewName extends BaseViewName<Database, SchemaName>,
+> extends OmitFrom<DataServiceParams<Database, ClientOptions, SchemaName>, 'relation'> {
     /**
      * The name of the view that this service interacts with.
      */
-    view: View;
+    view: ViewName;
 }
 
 /**
@@ -343,24 +386,26 @@ export interface ViewDataServiceParams<
  * Note mutations require an updatable view.
  *
  * @template Database The database type.
- * @template Schema The name of the schema containing the view.
- * @template View The name of the view.
+ * @template ClientOptions The options type for the PostgREST client, including the PostgREST version.
+ * @template SchemaName The name of the schema containing the view.
+ * @template ViewName The name of the view.
  * @example
  * const view = new ViewDataService({database, schema: 'public', view: 'my_view'});
  * const records = await view.list();
  * const record = await view.find('some-id');
  */
 export class ViewDataService<
-    Database extends CoreDatabase,
-    Schema extends SchemaName<Database> = SchemaName<Database>,
-    View extends ViewName<Database, Schema> = ViewName<Database, Schema>,
-> extends DataService<Database, Schema, 'Views', View> {
+    Database extends GenericDatabase<BaseSchemaName<Database>> & CoreDatabase,
+    ClientOptions extends Required<ClientServerOptions>,
+    SchemaName extends BaseSchemaName<Database>,
+    ViewName extends BaseViewName<Database, SchemaName>,
+> extends DataService<Database, ClientOptions, SchemaName, 'Views', ViewName> {
 
     constructor({
         database,
         schema,
         view,
-    }: ViewDataServiceParams<Database, Schema, View>) {
+    }: ViewDataServiceParams<Database, ClientOptions, SchemaName, ViewName>) {
         super({
             database,
             schema,

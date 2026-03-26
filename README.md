@@ -29,7 +29,7 @@ bun pm trust @freehour/supabase-core
 
 ### Configuration
 
-If you generate migrations from schemas, make sure to include the `supabase-core` schema in your `schema_paths` in `supabase/config.toml`.
+If you generate migrations from schemas, make sure to include the `supabase-core` db schema in your `schema_paths` in `supabase/config.toml`.
 
 ```toml
 schema_paths = ["./schemas/supabase-core/*.sql", /* your app schema paths */]
@@ -37,14 +37,13 @@ schema_paths = ["./schemas/supabase-core/*.sql", /* your app schema paths */]
 
 ### Building
 
-Make sure the migrations are up to date:
+If you chaged the database schema run the build script:
 
 ```bash
-rm -rf supabase/migrations/.*sql
-bunx supabase db diff -f 0000_supabase_core
+./scripts/build.sh
 ```
 
-Then build the package:
+otherwise, you can just build the package:
 
 ```bash
 bun run build
@@ -55,6 +54,7 @@ bun run build
 To publish a new version of the package, update the version in `package.json` and run:
 
 ```bash
+bunx npm login
 bun publish --access public
 ```
 
