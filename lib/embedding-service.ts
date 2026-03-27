@@ -40,10 +40,11 @@ export abstract class EmbeddingService<
      *
      * @param location The storage location of the file content that is being embedded.
      * @param text The text to generate embeddings for.
-     * @param metadata The metadata of the corresponding file.
+     * @param file The metadata of the corresponding file.
+     * @param metadata Additional metadata to store with the embedding.
      * @return An array of generated embeddings.
      */
-    protected abstract createEmbeddings(location: StorageLocation, text: string, metadata: FileMetadata & Metadata): Promise<Embedding[]>;
+    protected abstract createEmbeddings(location: StorageLocation, text: string, file: FileMetadata, metadata?: Metadata): Promise<Embedding[]>;
 
     /**
      * Delete the embeddings associated with the given file reference.
@@ -122,16 +123,20 @@ export abstract class EmbeddingService<
         await this.deleteEmbeddings(location);
 
         // preprocess the file content
-        const fileMetadata = {
+        const fileMetadata: FileMetadata = {
             name: file.name,
             type: file.type,
             size: file.size,
-            ...typeof metadata === 'function' ? metadata(file, location) : metadata,
         };
         const text = this.preprocess(await file.text(), fileMetadata);
 
         // generate embeddings
-        return this.createEmbeddings(location, text, fileMetadata);
+        return this.createEmbeddings(
+            location,
+            text,
+            fileMetadata,
+            typeof metadata === 'function' ? metadata(file, location) : metadata,
+        );
     }
 
     async synchronize(bucket: BucketName, metadata?: Metadata | MetadataGeneratorFn): Promise<EmbeddingSynchronizationResult[]> {

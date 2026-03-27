@@ -3,7 +3,7 @@
     "private": false,
     "displayName": "Supabase-Core",
     "description": "Lightweight services for supabase to make it easier to work with databases, tables and storage buckets",
-    "version": "1.5.1",
+    "version": "1.5.3",
     "type": "module",
     "repository": {
         "type": "git",
@@ -16,8 +16,8 @@
     },
     "files": [
         "dist",
-        "supabase/migrations",
-        "supabase/schemas",
+        "supabase/migrations/0000_supabase_core.sql",
+        "supabase/schemas/supabase-core",
         "scripts/copy-supabase-assets.js"
     ],
     "exports": {

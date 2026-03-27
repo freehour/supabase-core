@@ -16,7 +16,7 @@ export interface FileMetadata {
 export interface Embedding extends StorageLocation {
     text: string;
     vector: number[];
-    metadata: FileMetadata & Metadata;
+    metadata: Metadata;
     createdAt: Date;
 }
 
