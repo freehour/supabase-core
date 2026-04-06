@@ -3,7 +3,7 @@
   "private": false,
   "displayName": "Supabase-Core",
   "description": "Lightweight services for supabase to make it easier to work with databases, tables and storage buckets",
-  "version": "1.5.4",
+  "version": "1.6.0",
   "type": "module",
   "repository": {
     "type": "git",

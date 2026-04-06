@@ -1,11 +1,9 @@
 
-import { Mime } from '@freehour/mime';
 
-import type { Embedding, EmbeddingPreprocessingStep, EmbeddingSynchronizationFailure, EmbeddingSynchronizationResult, EmbeddingSynchronizationSuccess, FileMetadata, Metadata, MetadataGeneratorFn } from './embedding';
+import type { Embedding, EmbeddingSynchronizationFailure, EmbeddingSynchronizationResult, EmbeddingSynchronizationSuccess, Metadata, MetadataGeneratorFn } from './embedding';
 import { UnsupportedMimeError } from './errors';
 import type { FileRef, StorageLocation } from './storage';
 import type { StorageService } from './storage-service';
-import { removeElement } from './utils';
 
 
 export interface EmbeddingServiceParams<
@@ -17,8 +15,6 @@ export interface EmbeddingServiceParams<
 export abstract class EmbeddingService<
     BucketName extends string = string,
 > {
-
-    private readonly preprocesses: EmbeddingPreprocessingStep[] = [];
     protected readonly storage: StorageService<BucketName>;
 
     constructor({
@@ -44,7 +40,7 @@ export abstract class EmbeddingService<
      * @param metadata Additional metadata to store with the embedding.
      * @return An array of generated embeddings.
      */
-    protected abstract createEmbeddings(location: StorageLocation, text: string, file: FileMetadata, metadata?: Metadata): Promise<Embedding[]>;
+    protected abstract createEmbeddings(location: StorageLocation, metadata?: Metadata): Promise<Embedding[]>;
 
     /**
      * Delete the embeddings associated with the given file reference.
@@ -89,53 +85,21 @@ export abstract class EmbeddingService<
     }
 
 
-    private preprocess(text: string, metadata: FileMetadata): string {
-        this.preprocesses.forEach(preprocess => {
-            text = preprocess.run(text, metadata);
-        });
-        return text;
-    }
-
-    addPreprocessingStep(preprocess: EmbeddingPreprocessingStep): this {
-        this.preprocesses.push(preprocess);
-        return this;
-    }
-
-    removePreprocessingStep(name: string): this {
-        removeElement(this.preprocesses, p => p.name === name);
-        return this;
-    }
-
     async get(fileRef: FileRef<BucketName>): Promise<Embedding[]> {
         const location = await this.storage.getFileStorageLocation(fileRef);
         return this.getEmbeddings(location);
     }
 
     async ingest(fileRef: FileRef<BucketName>, metadata?: Metadata | MetadataGeneratorFn): Promise<Embedding[]> {
-        const { file, ...location } = await this.storage.downloadFile(fileRef);
-
-        const mime = Mime.parse(file.type);
-        if (mime.type !== 'text') {
-            throw new UnsupportedMimeError(`Unsupported file type: ${mime}. Only text files can be embedded.`);
-        }
+        const location = await this.storage.getFileStorageLocation(fileRef);
 
         // delete any existing embedding for the file before generating a new one
         await this.deleteEmbeddings(location);
 
-        // preprocess the file content
-        const fileMetadata: FileMetadata = {
-            name: file.name,
-            type: file.type,
-            size: file.size,
-        };
-        const text = this.preprocess(await file.text(), fileMetadata);
-
         // generate embeddings
         return this.createEmbeddings(
             location,
-            text,
-            fileMetadata,
-            typeof metadata === 'function' ? metadata(file, location) : metadata,
+            typeof metadata === 'function' ? metadata(location) : metadata,
         );
     }
 
