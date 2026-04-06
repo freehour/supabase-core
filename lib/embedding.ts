@@ -2,7 +2,7 @@ import type { Json } from './json';
 import type { FileRef, StorageLocation } from './storage';
 
 
-export type Metadata = Record<string, Json>;
+export type Metadata = Json;
 export type MetadataGeneratorFn = (location: StorageLocation) => Metadata;
 
 
