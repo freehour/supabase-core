@@ -1,5 +1,3 @@
-import type { MimeString } from '@freehour/mime';
-
 import type { Json } from './json';
 import type { FileRef, StorageLocation } from './storage';
 
@@ -7,11 +5,6 @@ import type { FileRef, StorageLocation } from './storage';
 export type Metadata = Record<string, Json>;
 export type MetadataGeneratorFn = (location: StorageLocation) => Metadata;
 
-export interface FileMetadata {
-    name: string;
-    type: MimeString;
-    size: number;
-}
 
 export interface Embedding extends StorageLocation {
     text: string;

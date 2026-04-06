@@ -1,6 +1,5 @@
 import z from 'zod';
 
-import type { Mime } from '@freehour/mime';
 import { PostgrestError } from '@supabase/supabase-js';
 
 
@@ -164,47 +163,6 @@ export class RecordNotFoundError extends TracedError {
         this.schema = schema;
         this.relation = relation;
         this.id = id;
-    }
-}
-
-export interface UnsupportedMimeErrorOptions extends ErrorOptions {
-
-    /**
-     * The MIME type that is unsupported.
-     */
-    value?: Mime;
-
-    /**
-     * The list of supported MIME types.
-     */
-    supported?: Mime[];
-}
-
-/**
- * An error that indicates that a supplied MIME type is not supported.
- */
-export class UnsupportedMimeError extends Error {
-    /**
-     * The MIME type that is unsupported.
-     */
-    readonly value?: Mime;
-
-    /**
-     * The list of supported MIME types.
-     */
-    readonly supported?: Mime[];
-
-    constructor(
-        message: string,
-        {
-            value,
-            supported,
-            ...options
-        }: UnsupportedMimeErrorOptions = {},
-    ) {
-        super(message, options);
-        this.value = value;
-        this.supported = supported;
     }
 }
 

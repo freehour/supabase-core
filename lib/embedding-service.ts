@@ -1,7 +1,6 @@
 
 
 import type { Embedding, EmbeddingSynchronizationFailure, EmbeddingSynchronizationResult, EmbeddingSynchronizationSuccess, Metadata, MetadataGeneratorFn } from './embedding';
-import { UnsupportedMimeError } from './errors';
 import type { FileRef, StorageLocation } from './storage';
 import type { StorageService } from './storage-service';
 
@@ -75,7 +74,7 @@ export abstract class EmbeddingService<
 
             files.push(
                 ...objects
-                    .filter((_, i) => isOutdated[i])
+                    .filter((_, i) => isOutdated[i] ?? false)
                     .map(({ id }): FileRef<BucketName> => ({ fileId: id })),
             );
 
@@ -106,7 +105,7 @@ export abstract class EmbeddingService<
     async synchronize(bucket: BucketName, metadata?: Metadata | MetadataGeneratorFn): Promise<EmbeddingSynchronizationResult[]> {
         const files = await this.getOutdatedEmbeddings(bucket);
 
-        const results = await Promise.all(
+        return Promise.all(
             files
                 .map(
                     async file => this.ingest(file, metadata)
@@ -115,19 +114,12 @@ export abstract class EmbeddingService<
                             success: true,
                             error: null,
                         }))
-                        .catch((error): EmbeddingSynchronizationFailure | null => {
-                            if (error instanceof UnsupportedMimeError) {
-                                return null;
-                            }
-                            return {
-                                file,
-                                error,
-                                success: false,
-                            };
-                        }),
+                        .catch((error): EmbeddingSynchronizationFailure => ({
+                            file,
+                            error,
+                            success: false,
+                        })),
                 ),
         );
-
-        return results.filter(result => result !== null);
     }
 }
