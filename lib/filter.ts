@@ -70,7 +70,7 @@ export interface FilterConditionNode<K extends string = string> {
 export interface FilterLogicalNode<K extends string = string> {
     type: 'logical';
     op: LogicalOp;
-    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+
     args: FilterNode<K>[];
 }
 
@@ -100,8 +100,8 @@ export type FilterKey<Item extends object> = KeyOfString<Item>;
  */
 export const Filter = <Item extends ZodObject>(item: Item) => <DecodeKey extends string = string>(
     mapping: Partial<Record<FilterKey<z.infer<Item>>, DecodeKey>> = {},
-) => {
-    const decodeKey = (key: FilterKey<z.infer<Item>>) => mapping[key] ?? key as unknown as DecodeKey;
+): z.ZodPipe<z.ZodString, z.ZodTransform<Filter<DecodeKey>, string>> => {
+    const decodeKey = (key: FilterKey<z.infer<Item>>): DecodeKey => mapping[key] ?? key as unknown as DecodeKey;
     const inputKeys = Object.keys(item.shape) as FilterKey<z.infer<Item>>[];
 
     return z

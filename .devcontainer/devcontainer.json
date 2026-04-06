@@ -54,6 +54,7 @@
                     // eslint already takes care of sorting imports
                     "source.organizeImports": "never"
                 },
+                "eslint.useFlatConfig": true,
                 "terminal.integrated.defaultProfile.linux": "bash",
 
                 "material-icon-theme.files.customClones": [

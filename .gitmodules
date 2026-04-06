@@ -1,3 +1,0 @@
-[submodule "eslint"]
-	path = eslint
-	url = git@github.com:freehour/eslint-rules.git

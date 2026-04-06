@@ -49,6 +49,7 @@ export type CountMethod = 'exact' | 'planned' | 'estimated';
  * Options for selecting rows from a database table.
  */
 export interface SelectOptions {
+
     /**
      * When set to `true`, `data` will not be returned, useful if you only need the count.
      */
@@ -65,6 +66,7 @@ export interface SelectOptions {
  * Options for inserting rows into a database table.
  */
 export interface InsertOptions {
+
     /**
      * The method to use to count rows returned by the function.
      * If not set, no count will be performed.
@@ -90,6 +92,7 @@ export interface UpsertOptions<
     RelationType extends BaseRelationType = BaseRelationType,
     RelationName extends BaseRelationName<Database, SchemaName, RelationType> = BaseRelationName<Database, SchemaName, RelationType>,
 > {
+
     /**
      * Comma-separated UNIQUE column(s) to use for conflict resolution.
      * This column is used to determine if a row already exists in the database.
@@ -136,6 +139,7 @@ export interface UpdateOptions {
  * Options for calling a PostgREST RPC function.
  */
 export interface RpcOptions extends SelectOptions {
+
     /**
      * When set to `true`, the function will be called with read-only access mode.
      */
@@ -223,18 +227,18 @@ export class PostgrestFilterBuilder<
     >(
         columns: Query = '*' as Query,
     ): PostgrestFilterBuilder<
-            ClientOptions,
-            Schema,
-            Row,
-            Method extends 'RPC'
-                ? Result extends unknown[]
-                    ? ResultOne[]
-                    : ResultOne
-                : ResultOne[],
-            RelationName,
-            Relationships,
-            Method
-        > {
+        ClientOptions,
+        Schema,
+        Row,
+        Method extends 'RPC'
+            ? Result extends unknown[]
+                ? ResultOne[]
+                : ResultOne
+            : ResultOne[],
+        RelationName,
+        Relationships,
+        Method
+    > {
         const builder = super.select<
             string,
             ResultOne
@@ -360,14 +364,14 @@ export class PostgrestQueryBuilder<
         columns: Query = '*' as Query,
         options?: SelectOptions,
     ): PostgrestFilterBuilder<
-            ClientOptions,
-            Schema<Database, SchemaName>,
-            Row<Database, SchemaName, RelationType, RelationName>,
-            ResultOne[],
-            RelationName,
-            Relationships<Database, SchemaName, RelationType, RelationName>,
-            'GET'
-        > {
+        ClientOptions,
+        Schema<Database, SchemaName>,
+        Row<Database, SchemaName, RelationType, RelationName>,
+        ResultOne[],
+        RelationName,
+        Relationships<Database, SchemaName, RelationType, RelationName>,
+        'GET'
+    > {
         const builder = super.select<
             string,
             ResultOne
@@ -426,14 +430,14 @@ export class PostgrestQueryBuilder<
         values: MaybeArray<Insert<Database, SchemaName, RelationType, RelationName>>,
         options?: InsertOptions,
     ): PostgrestFilterBuilder<
-            ClientOptions,
-            Schema<Database, SchemaName>,
-            Row<Database, SchemaName, RelationType, RelationName>,
-            null,
-            RelationName,
-            Relationships<Database, SchemaName, RelationType, RelationName>,
-            'POST'
-        > {
+        ClientOptions,
+        Schema<Database, SchemaName>,
+        Row<Database, SchemaName, RelationType, RelationName>,
+        null,
+        RelationName,
+        Relationships<Database, SchemaName, RelationType, RelationName>,
+        'POST'
+    > {
         const builder = super.insert<
             Insert<Database, SchemaName, RelationType, RelationName>
         >(values as any, options);
@@ -468,14 +472,14 @@ export class PostgrestQueryBuilder<
         values: MaybeArray<Insert<Database, SchemaName, RelationType, RelationName>>,
         { onConflict, ...options }: UpsertOptions<Database, SchemaName, RelationType, RelationName> = {},
     ): PostgrestFilterBuilder<
-            ClientOptions,
-            Schema<Database, SchemaName>,
-            Row<Database, SchemaName, RelationType, RelationName>,
-            null,
-            RelationName,
-            Relationships<Database, SchemaName, RelationType, RelationName>,
-            'POST'
-        > {
+        ClientOptions,
+        Schema<Database, SchemaName>,
+        Row<Database, SchemaName, RelationType, RelationName>,
+        null,
+        RelationName,
+        Relationships<Database, SchemaName, RelationType, RelationName>,
+        'POST'
+    > {
         const builder = super.upsert<
             Insert<Database, SchemaName, RelationType, RelationName>
         >(values as any, {
@@ -490,14 +494,14 @@ export class PostgrestQueryBuilder<
         value: Update<Database, SchemaName, RelationType, RelationName>,
         options?: UpdateOptions,
     ): PostgrestFilterBuilder<
-            ClientOptions,
-            Schema<Database, SchemaName>,
-            Row<Database, SchemaName, RelationType, RelationName>,
-            null,
-            RelationName,
-            Relationships<Database, SchemaName, RelationType, RelationName>,
-            'PATCH'
-        > {
+        ClientOptions,
+        Schema<Database, SchemaName>,
+        Row<Database, SchemaName, RelationType, RelationName>,
+        null,
+        RelationName,
+        Relationships<Database, SchemaName, RelationType, RelationName>,
+        'PATCH'
+    > {
         const builder = super.update(value, options);
         return new PostgrestFilterBuilder(builder);
     }
@@ -549,12 +553,12 @@ export class PostgrestClient<
     >(
         relation: RelationName,
     ): PostgrestQueryBuilder<
-            Database,
-            ClientOptions,
-            SchemaName,
-            RelationType,
-            RelationName
-        > {
+        Database,
+        ClientOptions,
+        SchemaName,
+        RelationType,
+        RelationName
+    > {
         const builder = this.client.from(relation) as Supabase.PostgrestQueryBuilder<
             ClientOptions,
             Schema<Database, SchemaName>,
@@ -572,17 +576,17 @@ export class PostgrestClient<
         fn: FunctionName,
         args?: Args,
         options?: RpcOptions,
-    ): ReturnType<typeof this.client.rpc<FunctionName, Args>> extends Supabase.PostgrestFilterBuilder<any, any, infer Row, infer Result, infer RelationName, infer Relationships, any> ?
-            PostgrestFilterBuilder<
-                ClientOptions,
-                Schema<Database, SchemaName>,
-                Row,
-                Result,
-                RelationName,
-                Relationships,
-                'RPC'
-            >
-            : never {
+    ): ReturnType<typeof this.client.rpc<FunctionName, Args>> extends Supabase.PostgrestFilterBuilder<any, any, infer Row, infer Result, infer RelationName, infer Relationships, any>
+        ? PostgrestFilterBuilder<
+            ClientOptions,
+            Schema<Database, SchemaName>,
+            Row,
+            Result,
+            RelationName,
+            Relationships,
+            'RPC'
+        >
+        : never {
         const builder = this.client.rpc(fn, args, options);
         return new PostgrestFilterBuilder(builder);
     }

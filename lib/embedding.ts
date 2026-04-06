@@ -5,7 +5,7 @@ import type { FileRef, StorageLocation } from './storage';
 
 
 export type Metadata = Record<string, Json>;
-export type MetadataGeneratorFn = ((file: File, location: StorageLocation) => Metadata);
+export type MetadataGeneratorFn = (file: File, location: StorageLocation) => Metadata;
 
 export interface FileMetadata {
     name: string;

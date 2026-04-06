@@ -1,6 +1,8 @@
 import { assert } from '@freehour/assert';
 import type { Camelize, FileObjectV2, SearchV2Options, SearchV2Result } from '@supabase/storage-js';
 
+import type { Database } from './generated/database';
+import type { TableDataService } from './data-service';
 import type { DatabaseService } from './database-service';
 import { FileNotFoundError } from './errors';
 import type { FileInfo, FilePointer, FileRef, PublicURLOptions, StorageClient, StorageLocation, UploadFileOptions } from './storage';
@@ -31,7 +33,7 @@ export class StorageService<
         this.database = database;
     }
 
-    private get files() {
+    private get files(): TableDataService<Database, any, 'storage', 'objects'> {
         return this.database.table('storage', 'objects');
     }
 

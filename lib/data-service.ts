@@ -20,6 +20,7 @@ export interface FuzzySearchParams<
     RelationType extends BaseRelationType = BaseRelationType,
     RelationName extends BaseRelationName<Database, SchemaName, RelationType> = BaseRelationName<Database, SchemaName, RelationType>,
 > {
+
     /**
      * The name of the column to search in.
      */
@@ -54,6 +55,7 @@ export interface DataServiceParams<
     RelationType extends BaseRelationType = BaseRelationType,
     RelationName extends BaseRelationName<Database, SchemaName, RelationType> = BaseRelationName<Database, SchemaName, RelationType>,
 > {
+
     /**
      * The database service instance to use for database operations.
      */
@@ -131,6 +133,7 @@ export class DataService<
     get query(): PostgrestQueryBuilder<Database, ClientOptions, SchemaName, RelationType, RelationName> {
         return this.database
             .schema(this.schema)
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
             .from<RelationType, RelationName>(this.relation);
     }
 
@@ -186,7 +189,7 @@ export class DataService<
     ): Promise<SelectResult<Database, SchemaName, RelationType, RelationName, Query> | undefined> {
         const { data } = await this.query
             .select(columns)
-            .eq('id', id as any)
+            .eq('id' as any, id as any)
             .throwOnError();
 
         return data[0];
@@ -224,7 +227,7 @@ export class DataService<
     > {
         const { data } = await this.query
             .delete()
-            .eq('id', id as any)
+            .eq('id' as any, id as any)
             .select()
             .throwOnError();
 
@@ -305,7 +308,7 @@ export class DataService<
     ): Promise<Row<Database, SchemaName, RelationType, RelationName>> {
         const { data } = await this.query
             .update(update as any)
-            .eq('id', id as any)
+            .eq('id' as any, id as any)
             .select()
             .single()
             .throwOnError();
@@ -327,6 +330,7 @@ export interface TableDataServiceParams<
     SchemaName extends BaseSchemaName<Database>,
     TableName extends BaseTableName<Database, SchemaName>,
 > extends OmitFrom<DataServiceParams<Database, ClientOptions, SchemaName>, 'relation'> {
+
     /**
      * The name of the table that this service interacts with.
      */
@@ -374,6 +378,7 @@ export interface ViewDataServiceParams<
     SchemaName extends BaseSchemaName<Database>,
     ViewName extends BaseViewName<Database, SchemaName>,
 > extends OmitFrom<DataServiceParams<Database, ClientOptions, SchemaName>, 'relation'> {
+
     /**
      * The name of the view that this service interacts with.
      */

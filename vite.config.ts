@@ -1,16 +1,14 @@
 import { resolve } from 'path';
 import { defineConfig } from 'vite';
 import dtsPlugin from 'vite-plugin-dts';
-import tsConfigPaths from 'vite-tsconfig-paths';
 
-import * as packageJson from './package.json';
+import pkg from './package.json' with { type: 'json' };
 
 
-const dependencies = [...Object.keys(packageJson.dependencies)];
+const dependencies = [...Object.keys(pkg.dependencies)];
 
 export default defineConfig({
     plugins: [
-        tsConfigPaths(),
         dtsPlugin({
             entryRoot: 'lib',
             include: ['lib/'],
@@ -24,7 +22,7 @@ export default defineConfig({
             entry: [
                 resolve(__dirname, './lib/index.ts'),
             ],
-            name: packageJson.name,
+            name: pkg.name,
             formats: ['es'],
         },
         rollupOptions: {
@@ -34,5 +32,8 @@ export default defineConfig({
                 preserveModulesRoot: 'lib',
             },
         },
+    },
+    resolve: {
+        tsconfigPaths: true,
     },
 });

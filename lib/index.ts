@@ -1,12 +1,12 @@
 export * from './data-service';
-export * from './database-service';
 export type * from './database';
-export * from './embedding-service';
+export * from './database-service';
 export * from './embedding';
+export * from './embedding-service';
 export * from './errors';
 export * from './filter';
 export type * from './json';
 export * from './postgrest';
-export * from './storage-service';
 export type * from './storage';
+export * from './storage-service';
 export * from './utils';

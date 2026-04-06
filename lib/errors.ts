@@ -17,6 +17,7 @@ export class TracedError extends Error {
 
 
 export interface FileNotFoundErrorOptions {
+
     /**
      * The ID of the file that was not found.
      */
@@ -69,6 +70,7 @@ export class FileNotFoundError extends TracedError {
 
 
 export interface ParseErrorOptions extends ErrorOptions {
+
     /**
      * The encountered expression that could not be parsed.
      */
@@ -111,6 +113,7 @@ export class ParseError extends TracedError {
 
 
 export interface RecordNotFoundErrorOptions {
+
     /**
      * The schema where the record was expected to be found.
      */
@@ -165,6 +168,7 @@ export class RecordNotFoundError extends TracedError {
 }
 
 export interface UnsupportedMimeErrorOptions extends ErrorOptions {
+
     /**
      * The MIME type that is unsupported.
      */

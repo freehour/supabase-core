@@ -1,55 +1,50 @@
 {
-    "name": "@freehour/supabase-core",
-    "private": false,
-    "displayName": "Supabase-Core",
-    "description": "Lightweight services for supabase to make it easier to work with databases, tables and storage buckets",
-    "version": "1.5.3",
-    "type": "module",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/freehour/supabase-core.git"
-    },
-    "scripts": {
-        "lint": "eslint ./lib --ext ts",
-        "build": "bun run lint && tsc && vite build",
-        "postinstall": "bun ./scripts/copy-supabase-assets.js"
-    },
-    "files": [
-        "dist",
-        "supabase/migrations/0000_supabase_core.sql",
-        "supabase/schemas/supabase-core",
-        "scripts/copy-supabase-assets.js"
-    ],
-    "exports": {
-        ".": {
-            "types": "./dist/index.d.ts",
-            "import": "./dist/index.js"
-        }
-    },
-    "dependencies": {
-        "@freehour/assert": "1.0.0",
-        "@freehour/mime": "^1.0.5",
-        "@supabase/postgrest-js": "^2.100.0",
-        "@supabase/storage-js": "^2.100.0",
-        "@supabase/supabase-js": "2.99.3",
-        "zod": "4.3.6"
-    },
-    "devDependencies": {
-        "@stylistic/eslint-plugin-js": "2.10.1",
-        "@stylistic/eslint-plugin-plus": "2.10.1",
-        "@stylistic/eslint-plugin-ts": "2.10.1",
-        "@typescript-eslint/eslint-plugin": "8.14.0",
-        "@typescript-eslint/parser": "8.14.0",
-        "ajv": "^8.18.0",
-        "bun-types": "^1.3.11",
-        "eslint": "8.57.1",
-        "eslint-import-resolver-typescript": "3.6.3",
-        "eslint-plugin-import-x": "4.4.3",
-        "eslint-plugin-simple-import-sort": "12.1.1",
-        "supabase": "^2.84.4",
-        "typescript": "^5.9.3",
-        "vite": "^7.3.1",
-        "vite-plugin-dts": "^4.5.4",
-        "vite-tsconfig-paths": "^5.1.4"
+  "name": "@freehour/supabase-core",
+  "private": false,
+  "displayName": "Supabase-Core",
+  "description": "Lightweight services for supabase to make it easier to work with databases, tables and storage buckets",
+  "version": "1.5.4",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/freehour/supabase-core.git"
+  },
+  "scripts": {
+    "lint": "eslint ./lib --ext ts",
+    "build": "bun run lint && tsc && vite build",
+    "postinstall": "bun ./scripts/copy-supabase-assets.js"
+  },
+  "files": [
+    "dist",
+    "supabase/migrations/0000_supabase_core.sql",
+    "supabase/schemas/supabase-core",
+    "scripts/copy-supabase-assets.js"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     }
+  },
+  "dependencies": {
+    "@freehour/assert": "^1.0.0",
+    "@freehour/mime": "^1.0.5",
+    "@supabase/postgrest-js": "^2.101.1",
+    "@supabase/storage-js": "^2.101.1",
+    "@supabase/supabase-js": "^2.101.1",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@freehour/eslint-rules": "^1.0.15",
+    "ajv": "^8.18.0",
+    "bun-types": "^1.3.11",
+    "eslint": "9.39.4",
+    "supabase": "^2.84.10",
+    "typescript": "^6.0.2",
+    "vite": "^8.0.4",
+    "vite-plugin-dts": "^4.5.4"
+  },
+  "trustedDependencies": [
+    "unrs-resolver"
+  ]
 }
