@@ -1,7 +1,6 @@
-export type Json =
-    | string
-    | number
-    | boolean
-    | null
-    | { [key: string]: Json | undefined }
-    | Json[];
+import type { Json } from './generated/database';
+
+
+export type JsonObject = Record<string, Json | undefined>;
+
+export type { Json } from './generated/database';
