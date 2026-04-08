@@ -301,30 +301,30 @@ export class PostgrestFilterBuilder<
      * @returns The paginated list of queried items.
      */
     collect(): PromiseLike<PostgrestSingleResponse<PaginatedList<ElementOf<Result>>>> {
-        return this.then(({ data, count, error, ...result }): PostgrestSingleResponse<PaginatedList<ElementOf<Result>>> => {
-            if (error) {
-                return { data, count, error, ...result };
+        return this.then((result): PostgrestSingleResponse<PaginatedList<ElementOf<Result>>> => {
+            if (result.success) {
+                const { data, count, ...rest } = result;
+                const { page, limit, ...pagination } = assert.defined(this.pagination, 'Pagination is required for collect(). Make sure to call paginate() before collect()');
+                const totalItems = count ?? pagination.count;
+
+                assert(limit > 0, 'Page limit must be > 0');
+                assert(Array.isArray(data), 'Data must be an array for pagination, make sure to select multiple rows in query');
+                assert(totalItems !== undefined, 'Row count is required for pagination, make sure to count in query or pass `count` in paginate()');
+
+                return {
+                    data: {
+                        items: data,
+                        totalItems,
+                        page,
+                        totalPages: Math.ceil(totalItems / limit),
+                        limit,
+                    },
+                    count,
+                    ...rest,
+                };
             }
 
-            const { page, limit, ...pagination } = assert.defined(this.pagination, 'Pagination is required for collect(). Make sure to call paginate() before collect()');
-            const totalItems = count ?? pagination.count;
-
-            assert(limit > 0, 'Page limit must be > 0');
-            assert(Array.isArray(data), 'Data must be an array for pagination, make sure to select multiple rows in query');
-            assert(totalItems !== undefined, 'Row count is required for pagination, make sure to count in query or pass `count` in paginate()');
-
-            return {
-                data: {
-                    items: data,
-                    totalItems,
-                    page,
-                    totalPages: Math.ceil(totalItems / limit),
-                    limit,
-                },
-                error,
-                count,
-                ...result,
-            };
+            return result;
         });
     }
 
@@ -502,7 +502,7 @@ export class PostgrestQueryBuilder<
         Relationships<Database, SchemaName, RelationType, RelationName>,
         'PATCH'
     > {
-        const builder = super.update(value, options);
+        const builder = super.update(value as any, options);
         return new PostgrestFilterBuilder(builder);
     }
 
