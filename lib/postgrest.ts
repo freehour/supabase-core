@@ -337,13 +337,15 @@ export class PostgrestQueryBuilder<
     SchemaName extends BaseSchemaName<Database>,
     RelationType extends BaseRelationType = BaseRelationType,
     RelationName extends BaseRelationName<Database, SchemaName, RelationType> = BaseRelationName<Database, SchemaName, RelationType>,
-> extends Supabase.PostgrestQueryBuilder<
+> {
+
+    protected readonly builder: Supabase.PostgrestQueryBuilder<
         ClientOptions,
         Schema<Database, SchemaName>,
         Relation<Database, SchemaName, RelationType, RelationName>,
         RelationName,
         Relationships<Database, SchemaName, RelationType, RelationName>
-    > {
+    >;
 
     constructor(
         builder: Supabase.PostgrestQueryBuilder<
@@ -354,10 +356,10 @@ export class PostgrestQueryBuilder<
             Relationships<Database, SchemaName, RelationType, RelationName>
         >,
     ) {
-        super(builder.url, builder);
+        this.builder = builder;
     }
 
-    override select<
+    select<
         Query extends SelectQuery<Database, SchemaName, RelationType, RelationName> = '*',
         ResultOne = SelectResult<Database, SchemaName, RelationType, RelationName, Query>,
     >(
@@ -372,7 +374,7 @@ export class PostgrestQueryBuilder<
         Relationships<Database, SchemaName, RelationType, RelationName>,
         'GET'
     > {
-        const builder = super.select<
+        const builder = this.builder.select<
             string,
             ResultOne
         >(
@@ -402,7 +404,7 @@ export class PostgrestQueryBuilder<
         return new PostgrestFilterBuilder(builder);
     }
 
-    override insert(
+    insert(
         value: Insert<Database, SchemaName, RelationType, RelationName>,
         options?: OmitFrom<InsertOptions, 'defaultToNull'>,
     ): PostgrestFilterBuilder<
@@ -414,7 +416,7 @@ export class PostgrestQueryBuilder<
         Relationships<Database, SchemaName, RelationType, RelationName>,
         'POST'
     >;
-    override insert(
+    insert(
         values: Insert<Database, SchemaName, RelationType, RelationName>[],
         options?: InsertOptions,
     ): PostgrestFilterBuilder<
@@ -426,7 +428,7 @@ export class PostgrestQueryBuilder<
         Relationships<Database, SchemaName, RelationType, RelationName>,
         'POST'
     >;
-    override insert(
+    insert(
         values: MaybeArray<Insert<Database, SchemaName, RelationType, RelationName>>,
         options?: InsertOptions,
     ): PostgrestFilterBuilder<
@@ -438,13 +440,13 @@ export class PostgrestQueryBuilder<
         Relationships<Database, SchemaName, RelationType, RelationName>,
         'POST'
     > {
-        const builder = super.insert<
+        const builder = this.builder.insert<
             Insert<Database, SchemaName, RelationType, RelationName>
         >(values as any, options);
         return new PostgrestFilterBuilder(builder);
     }
 
-    override upsert(
+    upsert(
         value: Insert<Database, SchemaName, RelationType, RelationName>,
         options?: OmitFrom<UpsertOptions<Database, SchemaName, RelationType, RelationName>, 'defaultToNull'>,
     ): PostgrestFilterBuilder<
@@ -456,7 +458,7 @@ export class PostgrestQueryBuilder<
         Relationships<Database, SchemaName, RelationType, RelationName>,
         'POST'
     >;
-    override upsert(
+    upsert(
         values: Insert<Database, SchemaName, RelationType, RelationName>[],
         options?: UpsertOptions<Database, SchemaName, RelationType, RelationName>,
     ): PostgrestFilterBuilder<
@@ -468,7 +470,7 @@ export class PostgrestQueryBuilder<
         Relationships<Database, SchemaName, RelationType, RelationName>,
         'POST'
     >;
-    override upsert(
+    upsert(
         values: MaybeArray<Insert<Database, SchemaName, RelationType, RelationName>>,
         { onConflict, ...options }: UpsertOptions<Database, SchemaName, RelationType, RelationName> = {},
     ): PostgrestFilterBuilder<
@@ -480,7 +482,7 @@ export class PostgrestQueryBuilder<
         Relationships<Database, SchemaName, RelationType, RelationName>,
         'POST'
     > {
-        const builder = super.upsert<
+        const builder = this.builder.upsert<
             Insert<Database, SchemaName, RelationType, RelationName>
         >(values as any, {
             onConflict: coerceArray(onConflict).join(','),
@@ -489,8 +491,7 @@ export class PostgrestQueryBuilder<
         return new PostgrestFilterBuilder(builder);
     }
 
-    // @ts-expect-error the signatures are compatible but typescript can't verify it
-    override update(
+    update(
         value: Update<Database, SchemaName, RelationType, RelationName>,
         options?: UpdateOptions,
     ): PostgrestFilterBuilder<
@@ -502,11 +503,11 @@ export class PostgrestQueryBuilder<
         Relationships<Database, SchemaName, RelationType, RelationName>,
         'PATCH'
     > {
-        const builder = super.update(value as any, options);
+        const builder = this.builder.update(value as any, options);
         return new PostgrestFilterBuilder(builder);
     }
 
-    override delete(): PostgrestFilterBuilder<
+    delete(): PostgrestFilterBuilder<
         ClientOptions,
         Schema<Database, SchemaName>,
         Row<Database, SchemaName, RelationType, RelationName>,
@@ -515,7 +516,7 @@ export class PostgrestQueryBuilder<
         Relationships<Database, SchemaName, RelationType, RelationName>,
         'DELETE'
     > {
-        const builder = super.delete();
+        const builder = this.builder.delete();
         return new PostgrestFilterBuilder(builder);
     }
 }
@@ -527,7 +528,7 @@ export class PostgrestClient<
     SchemaName extends BaseSchemaName<Database>,
 > {
 
-    private readonly client: Supabase.PostgrestClient<Database, ClientOptions, SchemaName, Schema<Database, SchemaName>>;
+    protected readonly client: Supabase.PostgrestClient<Database, ClientOptions, SchemaName, Schema<Database, SchemaName>>;
 
     constructor(
         client: Supabase.PostgrestClient<Database, ClientOptions, SchemaName, Schema<Database, SchemaName>>,
