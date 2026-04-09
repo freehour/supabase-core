@@ -6,6 +6,7 @@ import type { TableDataService } from './data-service';
 import type { DatabaseService } from './database-service';
 import { FileNotFoundError } from './errors';
 import type { FileInfo, FilePointer, FileRef, PublicURLOptions, StorageClient, StorageLocation, UploadFileOptions } from './storage';
+import { isFilePointer, isStorageLocation } from './storage';
 import { entries, groupBy, splitPath } from './utils';
 
 
@@ -37,7 +38,7 @@ export class StorageService<
         return this.database.table('storage', 'objects');
     }
 
-    private async getFileObject(bucket: string, path: string): Promise<Camelize<FileObjectV2>> {
+    private async getFileObject({ bucket, path }: FilePointer): Promise<Camelize<FileObjectV2>> {
         const { data, error } = await this.client
             .from(bucket)
             .info(path);
@@ -45,7 +46,6 @@ export class StorageService<
         if (error) {
             throw error;
         }
-
         return data;
     }
 
@@ -61,40 +61,39 @@ export class StorageService<
         return data;
     }
 
-    async getFileStorageLocation(fileRef: FileRef<BucketName>): Promise<StorageLocation> {
-        if ('fileId' in fileRef) {
-            const { fileId } = fileRef;
-            const fileInfo = await this.files.get(fileId, ['bucket_id', 'path_tokens']);
-
-            if (!fileInfo) {
-                throw new FileNotFoundError(`File with ID ${fileId} not found`, { fileId });
-            }
-
-            return {
-                fileId: fileId,
-                bucket: assert.notNull(fileInfo.bucket_id, 'bucket_id must not be null') as BucketName,
-                path: assert.notNull(fileInfo.path_tokens, 'path_tokens must not be null').join('/'),
-            };
+    async getFileStorageLocation(ref: FileRef<BucketName>): Promise<StorageLocation> {
+        if (isStorageLocation(ref)) {
+            return ref;
         }
 
-        const { bucket, path } = fileRef;
-        const { id: fileId } = await this.getFileObject(bucket, path);
+        if (isFilePointer(ref)) {
+            const { id } = await this.getFileObject(ref);
+            return { fileId: id, ...ref };
+        }
 
-        return { fileId, bucket, path };
+        const { fileId } = ref;
+        const fileInfo = await this.files.get(fileId, ['bucket_id', 'path_tokens']);
+        if (!fileInfo) {
+            throw new FileNotFoundError(`File with ID ${fileId} not found`, { fileId });
+        }
+
+        return {
+            fileId,
+            bucket: assert.notNull(fileInfo.bucket_id, 'bucket_id must not be null') as BucketName,
+            path: assert.notNull(fileInfo.path_tokens, 'path_tokens must not be null').join('/'),
+        };
     }
 
     async getFileInfo(fileRef: FileRef<BucketName>): Promise<FileInfo> {
-        const { fileId, bucket, path } = await this.getFileStorageLocation(fileRef);
-        const { id, bucketId, metadata, ...info } = await this.getFileObject(bucket, path);
+        const location = await this.getFileStorageLocation(fileRef);
+        const { id, bucketId, metadata, ...info } = await this.getFileObject(location);
 
-        assert(id === fileId, 'file ID from storage client must match file ID from database');
-        assert(bucketId === bucket, 'bucketId from storage client must match bucket from database');
+        assert(id === location.fileId, 'file ID from storage client must match file ID from database');
+        assert(bucketId === location.bucket, 'bucketId from storage client must match bucket from database');
 
         return {
             ...info,
-            fileId,
-            bucket,
-            path,
+            ...location,
             metadata,
             properties: metadata
                 ? {
@@ -204,7 +203,7 @@ export class StorageService<
         }));
 
         const filePointers = fileRefs
-            .filter(ref => 'path' in ref)
+            .filter(ref => isFilePointer(ref))
             .concat(resolvedFilePointers);
 
         const filePointersByBucket = entries(

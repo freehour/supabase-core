@@ -24,7 +24,17 @@ export interface FilePointer<BucketName extends string = string> {
 
 export type FileRef<BucketName extends string = string> = {
     fileId: string;
-} | FilePointer<BucketName>;
+    bucket?: never;
+    path?: never;
+} | {
+    fileId?: never;
+    bucket: BucketName;
+    path: string;
+} | {
+    fileId: string;
+    bucket: BucketName;
+    path: string;
+};
 
 export interface FileInfo extends OmitFrom<Camelize<FileObjectV2>, 'id' | 'bucketId'>, StorageLocation {
     properties: FilePropertyBag;
@@ -37,4 +47,13 @@ export interface PublicURLOptions {
 
 export interface UploadFileOptions {
     overwriteExisting?: boolean;
+}
+
+
+export function isFilePointer<BucketName extends string>(ref: FileRef<BucketName>): ref is FilePointer<BucketName> {
+    return ref.bucket !== undefined && ref.path !== undefined;
+}
+
+export function isStorageLocation(ref: FileRef): ref is StorageLocation {
+    return ref.fileId !== undefined && ref.bucket !== undefined;
 }
