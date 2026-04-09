@@ -11,10 +11,14 @@ export declare class StorageClient<BucketName extends string = string> extends S
 
 export type StorageObject = Database['storage']['Tables']['objects']['Row'];
 
-export interface StorageLocation {
+export interface StorageLocation<BucketName extends string = string> {
     fileId: string;
-    bucket: string;
+    bucket: BucketName;
     path: string;
+}
+
+export interface FileID {
+    fileId: string;
 }
 
 export interface FilePointer<BucketName extends string = string> {
@@ -22,21 +26,12 @@ export interface FilePointer<BucketName extends string = string> {
     path: string;
 }
 
-export type FileRef<BucketName extends string = string> = {
-    fileId: string;
-    bucket?: never;
-    path?: never;
-} | {
-    fileId?: never;
-    bucket: BucketName;
-    path: string;
-} | {
-    fileId: string;
-    bucket: BucketName;
-    path: string;
-};
+export type FileRef<BucketName extends string = string> =
+    | (FileID & { bucket?: never; path?: never })
+    | (FilePointer<BucketName> & { fileId?: never })
+    | StorageLocation<BucketName>;
 
-export interface FileInfo extends OmitFrom<Camelize<FileObjectV2>, 'id' | 'bucketId'>, StorageLocation {
+export interface FileInfo<BucketName extends string = string> extends OmitFrom<Camelize<FileObjectV2>, 'id' | 'bucketId'>, StorageLocation<BucketName> {
     properties: FilePropertyBag;
 }
 
@@ -49,11 +44,14 @@ export interface UploadFileOptions {
     overwriteExisting?: boolean;
 }
 
+export function isFileID(ref: FileRef): ref is FileID {
+    return ref.fileId !== undefined;
+}
 
 export function isFilePointer<BucketName extends string>(ref: FileRef<BucketName>): ref is FilePointer<BucketName> {
     return ref.bucket !== undefined && ref.path !== undefined;
 }
 
-export function isStorageLocation(ref: FileRef): ref is StorageLocation {
+export function isStorageLocation<BucketName extends string>(ref: FileRef<BucketName>): ref is StorageLocation<BucketName> {
     return ref.fileId !== undefined && ref.bucket !== undefined;
 }

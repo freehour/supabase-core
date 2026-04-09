@@ -61,7 +61,7 @@ export class StorageService<
         return data;
     }
 
-    async getFileStorageLocation(ref: FileRef<BucketName>): Promise<StorageLocation> {
+    async getFileStorageLocation(ref: FileRef<BucketName>): Promise<StorageLocation<BucketName>> {
         if (isStorageLocation(ref)) {
             return ref;
         }
@@ -84,7 +84,7 @@ export class StorageService<
         };
     }
 
-    async getFileInfo(fileRef: FileRef<BucketName>): Promise<FileInfo> {
+    async getFileInfo(fileRef: FileRef<BucketName>): Promise<FileInfo<BucketName>> {
         const location = await this.getFileStorageLocation(fileRef);
         const { id, bucketId, metadata, ...info } = await this.getFileObject(location);
 
@@ -148,7 +148,7 @@ export class StorageService<
         file: File,
         { bucket, path }: FilePointer<BucketName>,
         { overwriteExisting = false }: UploadFileOptions = {},
-    ): Promise<StorageLocation> {
+    ): Promise<StorageLocation<BucketName>> {
         const { data, error } = await this.client
             .from(bucket)
             .upload(
@@ -170,7 +170,7 @@ export class StorageService<
         };
     }
 
-    async downloadFile(fileRef: FileRef<BucketName>): Promise<StorageLocation & { file: File }> {
+    async downloadFile(fileRef: FileRef<BucketName>): Promise<StorageLocation<BucketName> & { file: File }> {
         const { fileId, bucket, path, properties } = await this.getFileInfo(fileRef);
 
         const { data, error } = await this.client
@@ -190,7 +190,7 @@ export class StorageService<
         };
     }
 
-    async deleteFiles(fileRefs: FileRef<BucketName>[]): Promise<StorageLocation[]> {
+    async deleteFiles(fileRefs: FileRef<BucketName>[]): Promise<StorageLocation<BucketName>[]> {
         const fileIds = fileRefs.filter(ref => 'fileId' in ref).map(ref => ref.fileId);
         const queryFiles = await this.files.query
             .select(['bucket_id', 'path_tokens'])
@@ -218,7 +218,7 @@ export class StorageService<
             async ({ bucket, paths }) => this.client
                 .from(bucket)
                 .remove(paths)
-                .then(({ data, error }): StorageLocation[] => {
+                .then(({ data, error }): StorageLocation<BucketName>[] => {
                     if (error) {
                         throw error;
                     }
