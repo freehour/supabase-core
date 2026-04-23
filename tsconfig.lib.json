@@ -3,7 +3,7 @@
   "include": [
     "lib",
     "eslint.config.ts"
-, ".stash/embedding.ts", ".stash/embedding-service.ts", ".stash/processing.ts"  ],
+  ],
   "compilerOptions": {
     "composite": true,
     "target": "esnext",
