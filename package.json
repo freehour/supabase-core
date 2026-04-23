@@ -3,7 +3,7 @@
   "private": false,
   "displayName": "Supabase-Core",
   "description": "Lightweight services for supabase to make it easier to work with databases, tables and storage buckets",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "type": "module",
   "repository": {
     "type": "git",
@@ -28,19 +28,22 @@
   },
   "dependencies": {
     "@freehour/assert": "^1.0.0",
-    "@supabase/postgrest-js": "^2.103.0",
-    "@supabase/storage-js": "^2.103.0",
-    "@supabase/supabase-js": "^2.103.0",
+    "@supabase/postgrest-js": "^2.104.0",
+    "@supabase/storage-js": "^2.104.0",
     "zod": "4.3.6"
+  },
+  "peerDependencies": {
+    "@supabase/supabase-js": "^2.104.0"
   },
   "devDependencies": {
     "@freehour/eslint-rules": "^1.0.19",
+    "@supabase/supabase-js": "^2.104.0",
     "ajv": "^8.18.0",
-    "bun-types": "^1.3.11",
+    "bun-types": "^1.3.13",
     "eslint": "9.39.4",
-    "supabase": "^2.88.1",
-    "typescript": "^6.0.2",
-    "vite": "^8.0.8",
+    "supabase": "^2.93.1",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.10",
     "vite-plugin-dts": "^4.5.4"
   },
   "trustedDependencies": [
