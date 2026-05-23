@@ -5,7 +5,10 @@ import dtsPlugin from 'vite-plugin-dts';
 import pkg from './package.json' with { type: 'json' };
 
 
-const dependencies = [...Object.keys(pkg.dependencies)];
+const dependencies = [
+    ...Object.keys(pkg.dependencies),
+    ...Object.keys(pkg.peerDependencies),
+];
 
 export default defineConfig({
     plugins: [
