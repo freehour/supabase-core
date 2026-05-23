@@ -40,7 +40,8 @@
                 "wayou.vscode-todo-highlight",
                 "shardulm94.trailing-spaces",
                 "dbaeumer.vscode-eslint",
-                "tamasfe.even-better-toml"
+                "tamasfe.even-better-toml",
+                "ms-azuretools.vscode-docker"
             ],
             "settings": {
                 // follows eslint rules
