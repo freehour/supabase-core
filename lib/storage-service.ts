@@ -73,7 +73,7 @@ export class StorageService<
 
         const { fileId } = ref;
         const fileInfo = await this.files.get(fileId, ['bucket_id', 'path_tokens']);
-        if (!fileInfo) {
+        if (fileInfo === undefined) {
             throw new FileNotFoundError(`File with ID ${fileId} not found`, { fileId });
         }
 

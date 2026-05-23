@@ -3,8 +3,8 @@ import z from 'zod';
 
 import { assert } from '@freehour/assert';
 
-import { ParseError } from './errors';
-import type { KeyOfString } from './utils';
+import { ParseError } from '../errors';
+import type { KeyOfString } from '../utils';
 
 
 /**

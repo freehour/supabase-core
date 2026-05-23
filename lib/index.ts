@@ -2,7 +2,6 @@ export * from './data-service';
 export type * from './database';
 export * from './database-service';
 export * from './errors';
-export * from './filter';
 export type * from './json';
 export * from './postgrest';
 export type * from './storage';

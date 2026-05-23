@@ -74,10 +74,6 @@ export type DefaultClientOptions<
 > = ClientOptions<D> extends Required<ClientServerOptions> ? ClientOptions<D> : { PostgrestVersion: '12' };
 
 
-// export type SchemaName<D> = Exclude<{
-//     [K in KeyOfString<D>]: D[K] extends GenericSchema ? K : never;
-// }[KeyOfString<D>], '__InternalSupabase'>;
-
 export type SchemaName<D> = Exclude<KeyOfString<D>, '__InternalSupabase'>;
 
 export type DefaultSchemaName<D> = 'public' extends SchemaName<D> ? 'public' : SchemaName<D>;

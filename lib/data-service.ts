@@ -83,7 +83,7 @@ export interface DataServiceParams<
  * @example
  * const service = new DataService({database, schema: 'public', relation: 'my_view'});
  * const records = await service.list();
- * const record = await service.find('some-id');
+ * const record = await service.get('some-id');
  */
 export class DataService<
     Database extends GenericDatabase<SchemaName> & CoreDatabase,
@@ -317,12 +317,6 @@ export class DataService<
     }
 }
 
-// export type TDatabase<Service> = Service extends DataService<infer D> ? D : never;
-// export type TSchema<Service> = Service extends DataService<any, infer S> ? S : never;
-// export type TRelation<Service> = Service extends DataService<any, any, infer R> ? R : never;
-// export type TColumn<Service> = Service extends DataService<infer D, infer S, infer R, infer T> ? ColumnName<D, S, R, T> : never;
-// export type TRow<Service> = Service extends DataService<infer D, infer S, infer R, infer T> ? Row<D, S, R, T> : never;
-
 
 export interface TableDataServiceParams<
     Database extends GenericDatabase<SchemaName> & CoreDatabase,
@@ -348,7 +342,7 @@ export interface TableDataServiceParams<
  * @example
  * const table = new TableDataService({database, schema: 'public', table: 'my_table'});
  * const records = await table.list();
- * const record = await table.find('some-id');
+ * const record = await table.get('some-id');
  * await table.insert({ id: 'new-id', name: 'New Record' });
  * await table.delete('some-id');
  */
@@ -397,7 +391,7 @@ export interface ViewDataServiceParams<
  * @example
  * const view = new ViewDataService({database, schema: 'public', view: 'my_view'});
  * const records = await view.list();
- * const record = await view.find('some-id');
+ * const record = await view.get('some-id');
  */
 export class ViewDataService<
     Database extends GenericDatabase<BaseSchemaName<Database>> & CoreDatabase,
