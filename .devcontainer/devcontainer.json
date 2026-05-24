@@ -1,6 +1,7 @@
 {
     "name": "Supabase-Core",
     "image": "oven/bun:latest",
+    "privileged": true,
     "features": {
         "ghcr.io/devcontainers/features/docker-in-docker": {
             "moby": false
