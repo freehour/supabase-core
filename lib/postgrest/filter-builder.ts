@@ -18,6 +18,7 @@ export class PostgrestFilterBuilder<
     RelationName = unknown,
     Relationships = unknown,
     Method = unknown,
+    ThrowOnError extends boolean = false,
 > extends Supabase.PostgrestFilterBuilder<
         ClientOptions,
         Schema,
@@ -54,6 +55,12 @@ export class PostgrestFilterBuilder<
         });
     }
 
+    override throwOnError(): Supabase.PostgrestBuilder<ClientOptions, Result, true> & PostgrestFilterBuilder<ClientOptions, Schema, Row, Result, RelationName, Relationships, Method, true> & this {
+        return super.throwOnError() as
+            Supabase.PostgrestBuilder<ClientOptions, Result, true>
+            & PostgrestFilterBuilder<ClientOptions, Schema, Row, Result, RelationName, Relationships, Method, true>
+            & this;
+    }
 
     override select<
         Query extends (keyof Row)[] | '*' | (string & {}) = '*',
@@ -82,7 +89,8 @@ export class PostgrestFilterBuilder<
             : ResultOne[],
         RelationName,
         Relationships,
-        Method
+        Method,
+        ThrowOnError
     > {
         const builder = super.select<
             string,
@@ -133,7 +141,8 @@ export class PostgrestFilterBuilder<
         Result,
         RelationName,
         Relationships,
-        Method
+        Method,
+        ThrowOnError
     > {
         assert(page >= 0, 'Page index must be ≥ 0');
         assert(limit >= 0, 'Page limit must be ≥ 0');
@@ -150,5 +159,4 @@ export class PostgrestFilterBuilder<
             },
         );
     }
-
 }

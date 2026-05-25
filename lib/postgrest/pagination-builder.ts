@@ -1,5 +1,5 @@
-import { assert } from '@freehour/assert';
-import type * as Supabase from '@supabase/postgrest-js';
+import type { PostgrestResponseSuccess } from '@supabase/postgrest-js';
+import * as Supabase from '@supabase/postgrest-js';
 import type { PostgrestSingleResponse } from '@supabase/supabase-js';
 
 import type { ClientServerOptions, GenericSchema } from '@/database';
@@ -25,6 +25,10 @@ export interface PaginatedList<Item> extends Pagination {
     totalPages: number;
 }
 
+export type CollectResult<Result, ThrowOnError extends boolean> = ThrowOnError extends true
+    ? PromiseLike<PostgrestResponseSuccess<PaginatedList<ElementOf<Result>>>>
+    : PromiseLike<PostgrestSingleResponse<PaginatedList<ElementOf<Result>>>>;
+
 
 export class PostgrestPaginationBuilder<
     ClientOptions extends ClientServerOptions,
@@ -34,6 +38,7 @@ export class PostgrestPaginationBuilder<
     RelationName = unknown,
     Relationships = unknown,
     Method = unknown,
+    ThrowOnError extends boolean = false,
 > extends PostgrestFilterBuilder<
         ClientOptions,
         Schema,
@@ -41,7 +46,8 @@ export class PostgrestPaginationBuilder<
         Result,
         RelationName,
         Relationships,
-        Method
+        Method,
+        ThrowOnError
     > {
 
     private readonly pagination: Pagination;
@@ -54,7 +60,8 @@ export class PostgrestPaginationBuilder<
             Result,
             RelationName,
             Relationships,
-            Method
+            Method,
+            ThrowOnError
         >,
         pagination: Pagination,
     ) {
@@ -90,7 +97,8 @@ export class PostgrestPaginationBuilder<
             : ResultOne[],
         RelationName,
         Relationships,
-        Method
+        Method,
+        ThrowOnError
     > {
         const builder = super.select<
             Query,
@@ -101,35 +109,115 @@ export class PostgrestPaginationBuilder<
         return new PostgrestPaginationBuilder(builder, this.pagination);
     }
 
+    override throwOnError(): Supabase.PostgrestBuilder<ClientOptions, Result, true> & PostgrestPaginationBuilder<ClientOptions, Schema, Row, Result, RelationName, Relationships, Method, true> & this {
+        return super.throwOnError() as
+            Supabase.PostgrestBuilder<ClientOptions, Result, true>
+            & PostgrestPaginationBuilder<ClientOptions, Schema, Row, Result, RelationName, Relationships, Method, true>
+            & this;
+    }
+
     /**
      * Collects the results of a pagination query.
      * **Note:** For pagination to work the selection must include a `count`.
      * @returns The paginated list of queried items.
      */
-    collect(): PromiseLike<PostgrestSingleResponse<PaginatedList<ElementOf<Result>>>> {
-        return this.then((result): PostgrestSingleResponse<PaginatedList<ElementOf<Result>>> => {
-            if (result.success) {
-                const { data, count, ...rest } = result;
+    collect(): CollectResult<Result, ThrowOnError> {
+        const result = this.then<
+            PostgrestSingleResponse<PaginatedList<ElementOf<Result>>>,
+            Supabase.PostgrestResponseFailure
+        >(
+            result => {
                 const { page, limit } = this.pagination;
+                const { success, data, count, error, ...rest } = result;
+                if (success) {
+                    const badRequest = {
+                        data: null,
+                        count: null,
+                        status: 400,
+                        statusText: 'Bad Request',
+                        success: false,
+                    } as const;
+                    if (limit <= 0) {
+                        return {
+                            error: new Supabase.PostgrestError({
+                                message: 'Page limit must be > 0',
+                                details: 'Invalid pagination limit',
+                                hint: 'Provide a valid page limit greater than 0',
+                                code: '',
+                            }),
+                            ...badRequest,
+                        };
+                    }
+                    if (!Array.isArray(data)) {
+                        return {
+                            error: new Supabase.PostgrestError({
+                                message: 'Data must be an array for pagination, make sure to select multiple rows in query',
+                                details: 'Invalid data format',
+                                hint: 'Ensure the query selects multiple rows resulting in an array',
+                                code: '',
+                            }),
+                            ...badRequest,
+                        };
+                    }
+                    if (count === null) {
+                        return {
+                            error: new Supabase.PostgrestError({
+                                message: 'Row count is required for pagination, make sure to count in query',
+                                details: 'Missing row count',
+                                hint: 'Include a count in the query to enable pagination',
+                                code: '',
+                            }),
+                            ...badRequest,
+                        };
+                    }
+                    return {
+                        success: true,
+                        data: {
+                            items: data,
+                            totalItems: count,
+                            page,
+                            totalPages: Math.ceil(count / limit),
+                            limit,
+                        },
+                        count,
+                        error,
+                        ...rest,
+                    };
+                }
 
-                assert(limit > 0, 'Page limit must be > 0');
-                assert(Array.isArray(data), 'Data must be an array for pagination, make sure to select multiple rows in query');
-                const totalItems = assert.notNull(count, 'Row count is required for pagination, make sure to count in query');
+                return result;
+            },
+            reason => ({
+                success: false,
+                data: null,
+                count: null,
+                error: reason instanceof Supabase.PostgrestError
+                    ? reason
+                    : new Supabase.PostgrestError({
+                        message: reason instanceof Error ? reason.message : String(reason),
+                        details: '',
+                        hint: '',
+                        code: '',
+                    }),
+                status: 0,
+                statusText: '',
+            }),
+        );
 
-                return {
-                    data: {
-                        items: data,
-                        totalItems,
-                        page,
-                        totalPages: Math.ceil(totalItems / limit),
-                        limit,
-                    },
-                    count,
-                    ...rest,
-                };
-            }
+        if (this.shouldThrowOnError) {
+            return result.then(
+                res => {
+                    if (!res.success) {
+                        throw res.error;
+                    }
+                    return res;
+                },
+                reason => {
+                    throw reason;
+                },
+            );
+        }
 
-            return result;
-        });
+        return result as CollectResult<Result, ThrowOnError>;
     }
 }

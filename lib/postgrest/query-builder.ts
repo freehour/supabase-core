@@ -203,8 +203,7 @@ export class PostgrestQueryBuilder<
         Relationships<Database, SchemaName, RelationType, RelationName>,
         'GET'
     > {
-        const builder = this.select('*', { count: method, head: true });
-        return new PostgrestFilterBuilder(builder);
+        return this.select('*', { count: method, head: true });
     }
 
     insert(
