@@ -3,8 +3,8 @@ import z from 'zod';
 
 import { assert } from '@freehour/assert';
 
-import { ParseError } from '../errors';
-import type { KeyOfString } from '../utils';
+import { ParseError } from '@/errors';
+import type { KeyOfString } from '@/utils';
 
 
 /**
@@ -27,25 +27,6 @@ export type FilterOp = `${'' | 'not.'}${typeof FilterOp[number]}`;
  */
 export const LogicalOp = ['and', 'or'] as const;
 export type LogicalOp = `${'' | 'not.'}${typeof LogicalOp[number]}`;
-
-/**
- * The separator used to split multiple filter expressions in a logical operator (e.g. `and`, `or`).
- */
-export const LogicalOpSeparator = ',';
-
-/**
- * The operator for chaining multiple filters.
- * This is a short notation for cascading filters with and().
- *
- * ***NOTE:*** PostgREST uses `&` to separate filters, but we use `~` as `&` is reserved for top-level query parameters.
- *
- * @example
- *  // The following filter expressions are equivalent:
- * 'name.cs.John~age.gt.30~createdAt.gte.2023-01-01'
- * 'and(name.cs.John,and(age.gt.30,createdAt.gte.2023-01-01))'.
- * @see https://docs.postgrest.org/en/stable/api.html#horizontal-filtering
- */
-export const FilterChainSeparator = '~';
 
 /**
  * A single filter condition in an abstract syntax tree (AST) of filter nodes.
@@ -98,21 +79,21 @@ export type FilterKey<Item extends object> = KeyOfString<Item>;
  * An array of filter AST nodes, representing a chain of filter expressions joined by a logical `and`.
  * It can be decoded from a string containing one or more filter expressions, chained with the {@link FilterChainSeparator chain separator `~`} .
  */
-export const Filter = <Item extends ZodObject>(item: Item) => <DecodeKey extends string = string>(
+export const FilterNode = <Item extends ZodObject>(item: Item) => <DecodeKey extends string = string>(
     mapping: Partial<Record<FilterKey<z.infer<Item>>, DecodeKey>> = {},
-): z.ZodPipe<z.ZodString, z.ZodTransform<Filter<DecodeKey>, string>> => {
+): z.ZodPipe<z.ZodString, z.ZodTransform<FilterNode<DecodeKey>, string>> => {
     const decodeKey = (key: FilterKey<z.infer<Item>>): DecodeKey => mapping[key] ?? key as unknown as DecodeKey;
     const inputKeys = Object.keys(item.shape) as FilterKey<z.infer<Item>>[];
 
     return z
         .string()
-        .transform<Filter<DecodeKey>>((filter, ctx) => {
+        .transform<FilterNode<DecodeKey>>((expression, ctx) => {
             try {
-                return parseFilterExpressionChain(filter, inputKeys, decodeKey);
+                return parseFilterExpression(expression, inputKeys, decodeKey);
             } catch (error) {
                 ctx.addIssue({
                     code: 'custom',
-                    input: filter,
+                    input: expression,
                     message: error instanceof Error ? error.message : undefined,
                     params: error instanceof ParseError
                         ? {
@@ -121,7 +102,7 @@ export const Filter = <Item extends ZodObject>(item: Item) => <DecodeKey extends
                         }
                         : undefined,
                 });
-                return [];
+                return z.NEVER;
             }
         });
 };
@@ -176,25 +157,6 @@ export function encodeFilterNode<K extends string = string>(
     }
     // Condition
     return `${transformKey(node.key)}.${node.op}.${node.value}`;
-}
-
-/**
- * Encodes a filter (an array of filter AST nodes) into a filter string
- * containing one or more filter expressions separated by a filter separator.
- *
- * @template InputKey - The type of keys in the filter AST nodes.
- * @template OutputKey - The type of keys in the filter string.
- * @param filter The filter to encode.
- * @param transformKey An optional function to transform keys from InputKey to OutputKey.
- * @param separator The separator used to join multiple filter expressions. Default is the {@link FilterChainSeparator chain separator `~`} .
- * @returns The encoded filter string.
- */
-export function encodeFilter<K extends string = string>(
-    filter: Filter<K>,
-    transformKey: (key: K) => string = key => key,
-    separator = FilterChainSeparator,
-): string {
-    return filter.map(node => encodeFilterNode(node, transformKey)).join(separator);
 }
 
 /**
@@ -299,34 +261,5 @@ export function parseFilterExpression<InputKey extends string = string, OutputKe
         op: op as FilterOp,
         value: assert.defined(value),
     };
-}
-
-/**
- * Parses a chain of filter expressions into a filter (an array of filter AST nodes).
- * Filter expressions are chained together using a filter separator.
- * Each expression in the chain must follow the dot notation of [PostgREST](https://docs.postgrest.org/en/v13/references/api/tables_views.html#horizontal-filtering).
- *
- * @template InputKey - The type of keys in the filter expressions.
- * @template OutputKey - The type of keys in the filter AST nodes.
- * @param expressions The filter string containing one or more filter expressions, chained together by the {@link separator}.
- * @param inputKeys The list of valid keys in the filter expressions.
- * This is used to validate the keys in the expressions. If not provided, any key is valid.
- * @param transformKey An optional function to transform keys from InputKey to OutputKey.
- * @param separator - The separator used to split multiple filter expressions. Default is the {@link FilterChainSeparator chain separator `~`} .
- * @returns An array of filter AST nodes parsed from the filter string. An empty string will resolve to an empty array.
- * @throws ParseError if any expression in the filter string can not be parsed, e.g. has invalid syntax, unsupported operators or unsupported keys.
- */
-export function parseFilterExpressionChain<InputKey extends string = string, OutputKey extends string = InputKey>(
-    expressions: string,
-    inputKeys: InputKey[] = [],
-    transformKey: (key: InputKey) => OutputKey = key => key as unknown as OutputKey,
-    separator = FilterChainSeparator,
-): FilterNode<OutputKey>[] {
-    if (expressions.length === 0) {
-        return [];
-    }
-    return expressions
-        .split(separator)
-        .map(expr => parseFilterExpression(expr, inputKeys, transformKey));
 }
 
