@@ -76,8 +76,13 @@ export type FilterKey<Item extends object> = KeyOfString<Item>;
 
 
 /**
- * An array of filter AST nodes, representing a chain of filter expressions joined by a logical `and`.
- * It can be decoded from a string containing one or more filter expressions, chained with the {@link FilterChainSeparator chain separator `~`} .
+ * A filter AST node schema that can be used to parse and validate filter expressions.
+ * The filter expression must follow the dot notation of [PostgREST](https://docs.postgrest.org/en/v13/references/api/tables_views.html#horizontal-filtering).
+ * @see https://docs.postgrest.org/en/v13/references/api/tables_views.html#horizontal-filtering
+ * @template Item The type of the item being filtered.
+ * @param item The Zod schema of the item being filtered. This is used to infer the valid filter keys.
+ * @param mapping An optional mapping from filter keys to decoded keys. This allows you to use different keys in the filter expressions and the resulting AST nodes.
+ * @returns A Zod schema that parses a filter expression string into a filter AST node.
  */
 export const FilterNode = <Item extends ZodObject>(item: Item) => <DecodeKey extends string = string>(
     mapping: Partial<Record<FilterKey<z.infer<Item>>, DecodeKey>> = {},
@@ -106,7 +111,6 @@ export const FilterNode = <Item extends ZodObject>(item: Item) => <DecodeKey ext
             }
         });
 };
-export type Filter<K extends string = string> = FilterNode<K>[];
 
 
 /**
@@ -144,7 +148,7 @@ export function negateFilterNode<K extends string = string, F extends FilterNode
  * @param node The filter AST node to encode to a string.
  * @param transformKey An optional function to transform keys from InputKey to OutputKey.
  * @returns The encoded filter expression as a string.
- * @see https://docs.postgrest.org/en/stable/api.html#horizontal-filtering
+ * @see https://docs.postgrest.org/en/v13/references/api/tables_views.html#horizontal-filtering
  */
 export function encodeFilterNode<K extends string = string>(
     node: FilterNode<K>,
@@ -162,7 +166,6 @@ export function encodeFilterNode<K extends string = string>(
 /**
  * Parses a filter expression into a filter AST node.
  * The expression must follow the dot notation of [PostgREST](https://docs.postgrest.org/en/v13/references/api/tables_views.html#horizontal-filtering).
- * See also {@link parseFilterExpressionChain}.
  *
  * @template InputKey - The type of keys in the filter expression.
  * @template OutputKey - The type of keys in the filter AST node.
