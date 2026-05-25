@@ -94,17 +94,28 @@ export class PostgrestFilterBuilder<
     }
 
     /**
-     * Applies a filter to the query.
+     * Applies a list of filters (joined by logical AND) to the query.
      * A filter is defined as an AST of filter nodes including conditions and logical operators.
-     * @param filter The filter to apply.
+     * @param filters The filters to apply.
      */
-    where(filter: FilterNode<KeyOfString<Row>>): this {
-        if (filter.type === 'logical') {
-            const filters = filter.args.map(arg => encodeFilterNode(arg)).join(',');
-            this.url.searchParams.append(filter.op, `(${filters})`);
+    where(...filters: FilterNode<KeyOfString<Row>>[]): this {
+        if (filters.length === 0) {
             return this;
         }
-        return this.filter(filter.key, filter.op, filter.value);
+        if (filters.length === 1) {
+            const filter = assert.value(filters[0]);
+            if (filter.type === 'logical') {
+                const filters = filter.args.map(arg => encodeFilterNode(arg)).join(',');
+                this.url.searchParams.append(filter.op, `(${filters})`);
+                return this;
+            }
+            return this.filter(filter.key, filter.op, filter.value);
+        }
+        return this.where({
+            type: 'logical',
+            op: 'and',
+            args: filters,
+        });
     }
 
     /**
