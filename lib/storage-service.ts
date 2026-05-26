@@ -68,17 +68,17 @@ export class StorageService<
 
         if (isFilePointer(ref)) {
             const { id } = await this.getFileObject(ref);
-            return { fileId: id, ...ref };
+            return { id, ...ref };
         }
 
-        const { fileId } = ref;
-        const fileInfo = await this.files.get(fileId, ['bucket_id', 'path_tokens']);
+        const { id } = ref;
+        const fileInfo = await this.files.get(id, ['bucket_id', 'path_tokens']);
         if (fileInfo === undefined) {
-            throw new FileNotFoundError(`File with ID ${fileId} not found`, { fileId });
+            throw new FileNotFoundError(`File with ID ${id} not found`, { id });
         }
 
         return {
-            fileId,
+            id,
             bucket: assert.notNull(fileInfo.bucket_id, 'bucket_id must not be null') as BucketName,
             path: assert.notNull(fileInfo.path_tokens, 'path_tokens must not be null').join('/'),
         };
@@ -88,7 +88,7 @@ export class StorageService<
         const location = await this.getFileStorageLocation(fileRef);
         const { id, bucketId, metadata, ...info } = await this.getFileObject(location);
 
-        assert(id === location.fileId, 'file ID from storage client must match file ID from database');
+        assert(id === location.id, 'file ID from storage client must match file ID from database');
         assert(bucketId === location.bucket, 'bucketId from storage client must match bucket from database');
 
         return {
@@ -164,14 +164,14 @@ export class StorageService<
         }
 
         return {
-            fileId: data.id,
+            id: data.id,
             bucket,
             path: data.path,
         };
     }
 
     async downloadFile(fileRef: FileRef<BucketName>): Promise<StorageLocation<BucketName> & { file: File }> {
-        const { fileId, bucket, path, properties } = await this.getFileInfo(fileRef);
+        const { id, bucket, path, properties } = await this.getFileInfo(fileRef);
 
         const { data, error } = await this.client
             .from(bucket)
@@ -183,7 +183,7 @@ export class StorageService<
 
         const [, name] = splitPath(path);
         return {
-            fileId,
+            id,
             bucket,
             path,
             file: new File([data], name, properties),
@@ -191,10 +191,10 @@ export class StorageService<
     }
 
     async deleteFiles(fileRefs: FileRef<BucketName>[]): Promise<StorageLocation<BucketName>[]> {
-        const fileIds = fileRefs.filter(ref => 'fileId' in ref).map(ref => ref.fileId);
+        const ids = fileRefs.filter(ref => 'id' in ref).map(ref => ref.id);
         const queryFiles = await this.files.query
             .select(['bucket_id', 'path_tokens'])
-            .containedBy('id', fileIds)
+            .containedBy('id', ids)
             .throwOnError();
 
         const resolvedFilePointers = queryFiles.data.map(({ bucket_id, path_tokens }) => ({
@@ -223,7 +223,7 @@ export class StorageService<
                         throw error;
                     }
                     return data.map((file, index) => ({
-                        fileId: assert.notNull(file.id, 'file id must not be null'),
+                        id: assert.notNull(file.id, 'file id must not be null'),
                         bucket,
                         path: assert.defined(paths[index], 'path must not be null'),
                     }));

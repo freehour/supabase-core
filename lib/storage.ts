@@ -12,13 +12,13 @@ export declare class StorageClient<BucketName extends string = string> extends S
 export type StorageObject = Database['storage']['Tables']['objects']['Row'];
 
 export interface StorageLocation<BucketName extends string = string> {
-    fileId: string;
+    id: string;
     bucket: BucketName;
     path: string;
 }
 
 export interface FileID {
-    fileId: string;
+    id: string;
 }
 
 export interface FilePointer<BucketName extends string = string> {
@@ -28,7 +28,7 @@ export interface FilePointer<BucketName extends string = string> {
 
 export type FileRef<BucketName extends string = string> =
     | (FileID & { bucket?: never; path?: never })
-    | (FilePointer<BucketName> & { fileId?: never })
+    | (FilePointer<BucketName> & { id?: never })
     | StorageLocation<BucketName>;
 
 export interface FileInfo<BucketName extends string = string> extends OmitFrom<Camelize<FileObjectV2>, 'id' | 'bucketId'>, StorageLocation<BucketName> {
@@ -45,7 +45,7 @@ export interface UploadFileOptions {
 }
 
 export function isFileID(ref: FileRef): ref is FileID {
-    return ref.fileId !== undefined;
+    return ref.id !== undefined;
 }
 
 export function isFilePointer<BucketName extends string>(ref: FileRef<BucketName>): ref is FilePointer<BucketName> {
@@ -53,5 +53,5 @@ export function isFilePointer<BucketName extends string>(ref: FileRef<BucketName
 }
 
 export function isStorageLocation<BucketName extends string>(ref: FileRef<BucketName>): ref is StorageLocation<BucketName> {
-    return ref.fileId !== undefined && ref.bucket !== undefined;
+    return ref.id !== undefined && ref.bucket !== undefined;
 }

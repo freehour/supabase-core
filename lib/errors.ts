@@ -20,7 +20,7 @@ export interface FileNotFoundErrorOptions {
     /**
      * The ID of the file that was not found.
      */
-    fileId?: string;
+    id?: string;
 
     /**
      * The name of the bucket where the file was expected to be found.
@@ -37,10 +37,11 @@ export interface FileNotFoundErrorOptions {
  * Error indicating that a file with a specified ID could not be found in storage.
  */
 export class FileNotFoundError extends TracedError {
+
     /**
      * The ID of the file that was not found.
      */
-    readonly fileId?: string;
+    readonly id?: string;
 
     /**
      * The name of the bucket where the file was expected to be found.
@@ -55,13 +56,13 @@ export class FileNotFoundError extends TracedError {
     constructor(
         message: string,
         {
-            fileId,
+            id,
             bucket,
             path,
         }: FileNotFoundErrorOptions = {},
     ) {
         super(message);
-        this.fileId = fileId;
+        this.id = id;
         this.bucket = bucket;
         this.path = path;
     }
@@ -136,6 +137,7 @@ export interface RecordNotFoundErrorOptions {
  * you may want to throw a more specific error in the service that uses it.
  */
 export class RecordNotFoundError extends TracedError {
+
     /**
      * The schema where the record was expected to be found.
      */
