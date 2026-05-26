@@ -74,7 +74,7 @@ export class StorageService<
         const { id } = ref;
         const fileInfo = await this.files.get(id, ['bucket_id', 'path_tokens']);
         if (fileInfo === undefined) {
-            throw new FileNotFoundError(`File with ID ${id} not found`, { id });
+            throw new FileNotFoundError(`File with ID ${id} not found`, { ref });
         }
 
         return {
@@ -129,7 +129,8 @@ export class StorageService<
     }
 
     async assertExistsFile(fileRef: FileRef<BucketName>): Promise<void> {
-        const { bucket, path } = await this.getFileStorageLocation(fileRef);
+        const location = await this.getFileStorageLocation(fileRef);
+        const { bucket, path } = location;
 
         const { data: exists, error } = await this.client
             .from(bucket)
@@ -140,7 +141,7 @@ export class StorageService<
         }
 
         if (!exists) {
-            throw new FileNotFoundError(`File not found in bucket '${bucket}' at path '${path}'`, { bucket, path });
+            throw new FileNotFoundError(`File not found in bucket '${bucket}' at path '${path}'`, { ref: location });
         }
     }
 

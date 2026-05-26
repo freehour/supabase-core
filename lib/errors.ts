@@ -2,6 +2,8 @@ import z from 'zod';
 
 import { PostgrestError } from '@supabase/supabase-js';
 
+import type { FileRef } from './storage';
+
 
 /**
  * Automatically sets the name and captures the stack trace for the error.
@@ -18,19 +20,9 @@ export class TracedError extends Error {
 export interface FileNotFoundErrorOptions {
 
     /**
-     * The ID of the file that was not found.
+     * A reference to the file that was expected to be found.
      */
-    id?: string;
-
-    /**
-     * The name of the bucket where the file was expected to be found.
-     */
-    bucket?: string;
-
-    /**
-     * The path relative to the bucket root where the file was expected to be found.
-     */
-    path?: string;
+    ref: FileRef;
 }
 
 /**
@@ -39,32 +31,18 @@ export interface FileNotFoundErrorOptions {
 export class FileNotFoundError extends TracedError {
 
     /**
-     * The ID of the file that was not found.
+     * A reference to the file that was expected to be found.
      */
-    readonly id?: string;
-
-    /**
-     * The name of the bucket where the file was expected to be found.
-     */
-    readonly bucket?: string;
-
-    /**
-     * The path relative to the bucket root where the file was expected to be found.
-     */
-    readonly path?: string;
+    readonly ref: FileRef;
 
     constructor(
         message: string,
         {
-            id,
-            bucket,
-            path,
-        }: FileNotFoundErrorOptions = {},
+            ref,
+        }: FileNotFoundErrorOptions,
     ) {
         super(message);
-        this.id = id;
-        this.bucket = bucket;
-        this.path = path;
+        this.ref = ref;
     }
 }
 
@@ -74,7 +52,7 @@ export interface ParseErrorOptions extends ErrorOptions {
     /**
      * The encountered expression that could not be parsed.
      */
-    expression?: string;
+    expression: string;
 
     /**
      * Additional context about the expected format or structure.
@@ -90,7 +68,7 @@ export class ParseError extends TracedError {
     /**
      * The encountered expression that could not be parsed.
      */
-    readonly expression?: string;
+    readonly expression: string;
 
     /**
      * Additional context about the expected format or structure.
@@ -103,7 +81,7 @@ export class ParseError extends TracedError {
             expression,
             format,
             ...options
-        }: ParseErrorOptions = {},
+        }: ParseErrorOptions,
     ) {
         super(message, options);
         this.expression = expression;
@@ -117,17 +95,17 @@ export interface RecordNotFoundErrorOptions {
     /**
      * The schema where the record was expected to be found.
      */
-    schema?: string;
+    schema: string;
 
     /**
      * The table or view where the record was expected to be found.
      */
-    relation?: string;
+    relation: string;
 
     /**
      * The ID of the record that was not found.
      */
-    id?: string | number;
+    id: string | number;
 }
 
 /**
@@ -141,17 +119,17 @@ export class RecordNotFoundError extends TracedError {
     /**
      * The schema where the record was expected to be found.
      */
-    readonly schema?: string;
+    readonly schema: string;
 
     /**
      * The table or view where the record was expected to be found.
      */
-    readonly relation?: string;
+    readonly relation: string;
 
     /**
      * The ID of the record that was not found.
      */
-    readonly id?: string | number;
+    readonly id: string | number;
 
     constructor(
         message: string,
@@ -159,7 +137,7 @@ export class RecordNotFoundError extends TracedError {
             schema,
             relation,
             id,
-        }: RecordNotFoundErrorOptions = {},
+        }: RecordNotFoundErrorOptions,
     ) {
         super(message);
         this.schema = schema;
