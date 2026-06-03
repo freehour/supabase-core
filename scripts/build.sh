@@ -15,7 +15,7 @@ fi
 bunx supabase status || bunx supabase start
 
 # Generate the migration from the schema as a file <timestamp>_0000_supabase_core.sql in the supabase/migrations directory
-rm -rf ./supabase/migrations/*.sql --verbose
+rm -rf ./supabase/migrations/0000_supabase_core.sql --verbose
 bunx supabase db diff -f 0000_supabase_core
 
 # remove timestamp prefix
