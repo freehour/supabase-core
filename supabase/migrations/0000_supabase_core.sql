@@ -56,3 +56,6 @@ $function$
 ;
 
 
+grant usage on schema core to "anon";
+grant usage on schema core to "authenticated";
+grant usage on schema core to "service_role";
