@@ -49,7 +49,8 @@ export class PostgrestFilterBuilder<
         Result,
         RelationName,
         Relationships,
-        Method
+        Method,
+        ThrowOnError
     > {
 
 
@@ -61,7 +62,8 @@ export class PostgrestFilterBuilder<
             Result,
             RelationName,
             Relationships,
-            Method
+            Method,
+            ThrowOnError
         >,
     ) {
         super(builder as unknown as {
@@ -70,7 +72,7 @@ export class PostgrestFilterBuilder<
             headers: Headers;
             schema?: string;
             body?: unknown;
-            shouldThrowOnError: boolean;
+            shouldThrowOnError: ThrowOnError;
             signal?: AbortSignal;
             fetch: typeof fetch;
             isMaybeSingle: boolean;
@@ -78,11 +80,9 @@ export class PostgrestFilterBuilder<
         });
     }
 
-    override throwOnError(): Supabase.PostgrestBuilder<ClientOptions, Result, true> & PostgrestFilterBuilder<ClientOptions, Schema, Row, Result, RelationName, Relationships, Method, true> & this {
-        return super.throwOnError() as
-            Supabase.PostgrestBuilder<ClientOptions, Result, true>
-            & PostgrestFilterBuilder<ClientOptions, Schema, Row, Result, RelationName, Relationships, Method, true>
-            & this;
+    override throwOnError(): PostgrestFilterBuilder<ClientOptions, Schema, Row, Result, RelationName, Relationships, Method, true> {
+        const builder = super.throwOnError();
+        return new PostgrestFilterBuilder(builder);
     }
 
     override select<
@@ -224,6 +224,10 @@ export class PostgrestPaginationBuilder<
         this.pagination = pagination;
     }
 
+    override throwOnError(): PostgrestPaginationBuilder<ClientOptions, Schema, Row, Result, RelationName, Relationships, Method, true> {
+        const builder = super.throwOnError();
+        return new PostgrestPaginationBuilder(builder, this.pagination);
+    }
 
     override select<
         Query extends (keyof Row)[] | '*' | (string & {}) = '*',
@@ -262,13 +266,6 @@ export class PostgrestPaginationBuilder<
             columns,
         );
         return new PostgrestPaginationBuilder(builder, this.pagination);
-    }
-
-    override throwOnError(): Supabase.PostgrestBuilder<ClientOptions, Result, true> & PostgrestPaginationBuilder<ClientOptions, Schema, Row, Result, RelationName, Relationships, Method, true> & this {
-        return super.throwOnError() as
-            Supabase.PostgrestBuilder<ClientOptions, Result, true>
-            & PostgrestPaginationBuilder<ClientOptions, Schema, Row, Result, RelationName, Relationships, Method, true>
-            & this;
     }
 
     /**
