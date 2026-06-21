@@ -6,12 +6,11 @@ import type { FileRef } from './storage';
 
 
 /**
- * Automatically sets the name and captures the stack trace for the error.
+ * Automatically captures the stack trace for the error.
  */
 export class TracedError extends Error {
     constructor(message?: string, options: ErrorOptions = {}) {
         super(message, options);
-        this.name = this.constructor.name;
         Error.captureStackTrace(this, this.constructor);
     }
 }
@@ -42,6 +41,7 @@ export class FileNotFoundError extends TracedError {
         }: FileNotFoundErrorOptions,
     ) {
         super(message);
+        this.name = 'FileNotFoundError';
         this.ref = ref;
     }
 }
@@ -84,6 +84,7 @@ export class ParseError extends TracedError {
         }: ParseErrorOptions,
     ) {
         super(message, options);
+        this.name = 'ParseError';
         this.expression = expression;
         this.format = format;
     }
@@ -140,6 +141,7 @@ export class RecordNotFoundError extends TracedError {
         }: RecordNotFoundErrorOptions,
     ) {
         super(message);
+        this.name = 'RecordNotFoundError';
         this.schema = schema;
         this.relation = relation;
         this.id = id;
