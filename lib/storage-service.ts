@@ -86,7 +86,7 @@ export class StorageService<
 
     async getFileInfo(fileRef: FileRef<BucketName>): Promise<FileInfo<BucketName>> {
         const location = await this.getFileStorageLocation(fileRef);
-        const { id, bucketId, metadata, ...info } = await this.getFileObject(location);
+        const { id, bucketId, metadata, name, ...info } = await this.getFileObject(location);
 
         assert(id === location.id, 'file ID from storage client must match file ID from database');
         assert(bucketId === location.bucket, 'bucketId from storage client must match bucket from database');
@@ -94,6 +94,7 @@ export class StorageService<
         return {
             ...info,
             ...location,
+            name: splitPath(name)[1],
             metadata,
             properties: metadata
                 ? {
@@ -172,7 +173,7 @@ export class StorageService<
     }
 
     async downloadFile(fileRef: FileRef<BucketName>): Promise<StorageLocation<BucketName> & { file: File }> {
-        const { id, bucket, path, properties } = await this.getFileInfo(fileRef);
+        const { id, bucket, path, name, properties } = await this.getFileInfo(fileRef);
 
         const { data, error } = await this.client
             .from(bucket)
@@ -182,7 +183,6 @@ export class StorageService<
             throw error;
         }
 
-        const [, name] = splitPath(path);
         return {
             id,
             bucket,
